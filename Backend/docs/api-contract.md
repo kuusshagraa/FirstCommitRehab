@@ -61,4 +61,4 @@ Newly authenticated users default to patient. Doctor access comes from a server-
 
 ## Frontend integration notes
 
-Configure the React app with a backend base URL in a future integration change. The current frontend still uses browser-local demo state. Firebase web credentials and a logged-in Firebase ID token are required before it can call protected routes. Do not put Firebase Admin credentials in the browser.
+The React app initializes Firebase Authentication from Vite environment variables, supports patient email/password registration and sign-in, and sends Firebase ID tokens to protected API routes. Set `VITE_API_BASE_URL` to the backend origin (default `http://localhost:3000`). The patient app reads assignments, feedback, exercise catalog, and session history from the API; clinicians can review linked patients, update assignments, and send feedback. New self-registered accounts are patients. Provision clinician custom claims and patient links with the backend operator scripts. Firebase Admin credentials must remain server-side and must never be placed in the frontend environment.
