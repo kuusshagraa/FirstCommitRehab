@@ -51,6 +51,8 @@ For a cloud Firebase project, set `FIREBASE_PROJECT_ID`, remove both emulator ho
 - Doctor accounts must be explicitly provisioned by an operator with Admin SDK credentials: `npm run set:doctor -- <firebase-auth-uid>`. The user must sign in again to refresh the role claim.
 - Patient-doctor relationships must be provisioned by an operator: `npm run link:patient -- <patient-auth-uid> <doctor-auth-uid>`. The patient must sign in once and the doctor must be provisioned first.
 
+See [`docs/api-contract.md`](docs/api-contract.md) for the route matrix, request bodies, role requirements, and model-service payload.
+
 ## Planned data groups
 
-Session records are stored under `patients/{patientUid}/sessions/{sessionId}`. New records start with `evaluation: null` and `evaluationStatus: "not_requested"`. Evaluation requires `AI_EVALUATION_URL`; the API sends `{ sessionId, exerciseLabel, jointAngles, samplingHz }`, with 2–120 frames of 16 numeric joint-angle features. The model service should return `{ classLabel, confidence, modelVersion? }`, where `classLabel` is one of the nine supported exercise labels and `confidence` is between 0 and 1. No model is bundled, and the backend does not invent a result when the service is unavailable.
+Session records are stored under `patients/{patientUid}/sessions/{sessionId}`. New records start with `evaluation: null` and `evaluationStatus: "not_requested"`. Evaluation requires `AI_EVALUATION_URL`; the model input and response contract is documented in [`docs/api-contract.md`](docs/api-contract.md). No model is bundled, and the backend does not invent a result when the service is unavailable.

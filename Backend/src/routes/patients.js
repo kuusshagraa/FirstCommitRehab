@@ -14,6 +14,10 @@ function invalid(message, code = "INVALID_REQUEST") {
   return error;
 }
 
+router.get("/exercises", requireAuth, (_request, response) => {
+  response.json({ data: exercises });
+});
+
 router.get("/patients", requireAuth, requireRole("doctor"), async (request, response) => {
   const links = await db.collection("patients").where("doctorUid", "==", request.user.uid).get();
   const patients = await Promise.all(links.docs.map(async (link) => {
