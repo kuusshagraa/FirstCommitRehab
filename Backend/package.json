@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
-    "set:doctor": "node scripts/set-doctor-role.js"
+    "set:doctor": "node scripts/set-doctor-role.js",
+    "link:patient": "node scripts/link-patient.js"
   },
   "dependencies": {
     "cors": "^2.8.6",
