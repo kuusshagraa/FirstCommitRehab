@@ -55,4 +55,4 @@ See [`docs/api-contract.md`](docs/api-contract.md) for the route matrix, request
 
 ## Planned data groups
 
-Session records are stored under `patients/{patientUid}/sessions/{sessionId}`. New records start with `evaluation: null` and `evaluationStatus: "not_requested"`. Evaluation requires `AI_EVALUATION_URL`; the model input and response contract is documented in [`docs/api-contract.md`](docs/api-contract.md). No model is bundled, and the backend does not invent a result when the service is unavailable.
+Session records are stored under `patients/{patientUid}/sessions/{sessionId}`. New records start with `evaluation: null` and `evaluationStatus: "not_requested"`. Evaluation requires `AI_EVALUATION_URL`; the model input and response contract is documented in [`docs/api-contract.md`](docs/api-contract.md). A separate research baseline lives in [`model-service`](model-service/README.md); it recognizes six REHAB24-6 movement classes from raw 26-joint pose sequences. It is not connected to the session evaluation route, which currently accepts 16 joint angles, and it does not replace RehabAI's nine target classes.

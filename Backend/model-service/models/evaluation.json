@@ -1,0 +1,265 @@
+{
+  "dataset": "REHAB24-6",
+  "dataset_source": "https://zenodo.org/records/13305826",
+  "task": "six-class exercise identification from one segmented 2D skeleton repetition",
+  "sample_count": 606,
+  "evaluation": "5-fold GroupKFold; all samples from one participant stay in the same fold",
+  "participant_groups": [
+    "1",
+    "10",
+    "2",
+    "3",
+    "4",
+    "5",
+    "6",
+    "7",
+    "8",
+    "9"
+  ],
+  "folds": [
+    {
+      "fold": 1,
+      "train_groups": [
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9"
+      ],
+      "test_groups": [
+        "1",
+        "10"
+      ],
+      "test_samples": 92,
+      "accuracy": 1.0,
+      "balanced_accuracy": 1.0
+    },
+    {
+      "fold": 2,
+      "train_groups": [
+        "1",
+        "10",
+        "2",
+        "4",
+        "5",
+        "7",
+        "8",
+        "9"
+      ],
+      "test_groups": [
+        "3",
+        "6"
+      ],
+      "test_samples": 125,
+      "accuracy": 0.976,
+      "balanced_accuracy": 0.9827586206896551
+    },
+    {
+      "fold": 3,
+      "train_groups": [
+        "1",
+        "10",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8"
+      ],
+      "test_groups": [
+        "2",
+        "9"
+      ],
+      "test_samples": 132,
+      "accuracy": 0.9772727272727273,
+      "balanced_accuracy": 0.9772727272727272
+    },
+    {
+      "fold": 4,
+      "train_groups": [
+        "1",
+        "10",
+        "2",
+        "3",
+        "5",
+        "6",
+        "7",
+        "9"
+      ],
+      "test_groups": [
+        "4",
+        "8"
+      ],
+      "test_samples": 130,
+      "accuracy": 0.9153846153846154,
+      "balanced_accuracy": 0.9168344940084071
+    },
+    {
+      "fold": 5,
+      "train_groups": [
+        "1",
+        "10",
+        "2",
+        "3",
+        "4",
+        "6",
+        "8",
+        "9"
+      ],
+      "test_groups": [
+        "5",
+        "7"
+      ],
+      "test_samples": 127,
+      "accuracy": 1.0,
+      "balanced_accuracy": 1.0
+    }
+  ],
+  "class_counts": {
+    "arm_abduction": 88,
+    "arm_vw": 109,
+    "leg_abduction": 116,
+    "leg_lunge": 88,
+    "squat": 98,
+    "table_push_up": 107
+  },
+  "accuracy": 0.971947194719472,
+  "balanced_accuracy": 0.9716535517028128,
+  "classification_report": {
+    "arm_abduction": {
+      "precision": 1.0,
+      "recall": 0.9772727272727273,
+      "f1-score": 0.9885057471264368,
+      "support": 88.0
+    },
+    "arm_vw": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 109.0
+    },
+    "leg_abduction": {
+      "precision": 0.9818181818181818,
+      "recall": 0.9310344827586207,
+      "f1-score": 0.9557522123893806,
+      "support": 116.0
+    },
+    "leg_lunge": {
+      "precision": 1.0,
+      "recall": 0.9318181818181818,
+      "f1-score": 0.9647058823529412,
+      "support": 88.0
+    },
+    "squat": {
+      "precision": 0.9326923076923077,
+      "recall": 0.9897959183673469,
+      "f1-score": 0.9603960396039604,
+      "support": 98.0
+    },
+    "table_push_up": {
+      "precision": 0.9304347826086956,
+      "recall": 1.0,
+      "f1-score": 0.963963963963964,
+      "support": 107.0
+    },
+    "accuracy": 0.971947194719472,
+    "macro avg": {
+      "precision": 0.9741575453531975,
+      "recall": 0.9716535517028128,
+      "f1-score": 0.9722206409061139,
+      "support": 606.0
+    },
+    "weighted avg": {
+      "precision": 0.9733519422176331,
+      "recall": 0.971947194719472,
+      "f1-score": 0.9719683763311646,
+      "support": 606.0
+    }
+  },
+  "confusion_matrix_labels": [
+    "arm_abduction",
+    "arm_vw",
+    "leg_abduction",
+    "leg_lunge",
+    "squat",
+    "table_push_up"
+  ],
+  "confusion_matrix": [
+    [
+      86,
+      0,
+      2,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      109,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      108,
+      0,
+      4,
+      4
+    ],
+    [
+      0,
+      0,
+      0,
+      82,
+      3,
+      3
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      97,
+      1
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      0,
+      107
+    ]
+  ],
+  "frame_count": 32,
+  "skeleton_joints": 26,
+  "input_features": 1664,
+  "preprocessing": "32-frame interpolation; pelvis-centered; torso-scale normalized; 2D coordinates",
+  "model": "StandardScaler + RBF SVC (probability enabled)",
+  "annotation_columns": [
+    "file_name",
+    "exercise_id",
+    "person_id",
+    "repetition",
+    "side",
+    "correctness",
+    "orientation",
+    "video_id",
+    "repetition_number",
+    "first_frame",
+    "last_frame",
+    "cam17_orientation",
+    "mocap_erroneous",
+    "exercise_subtype",
+    "lights_on",
+    "extra_person_in_cam17",
+    "extra_person_in_cam18"
+  ],
+  "note": "Research baseline only. This dataset's six classes do not equal RehabAI's nine slide classes; not validated for clinical use."
+}

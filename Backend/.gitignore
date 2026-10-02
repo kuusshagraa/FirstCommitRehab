@@ -3,3 +3,6 @@ node_modules/
 !.env.example
 *.log
 service-account*.json
+model-service/data/
+model-service/.venv/
+model-service/__pycache__/
