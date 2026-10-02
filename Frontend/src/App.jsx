@@ -82,6 +82,27 @@ function Icon({ name, className = "h-5 w-5", filled = false }) {
   return <svg {...common}>{artwork[name]}</svg>;
 }
 
+function useStoredState(key, initialValue) {
+  const [value, setValue] = useState(() => {
+    try {
+      const stored = window.localStorage.getItem(key);
+      return stored ? JSON.parse(stored) : initialValue;
+    } catch {
+      return initialValue;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(key, JSON.stringify(value));
+    } catch {
+      // Keep the prototype usable when browser storage is unavailable.
+    }
+  }, [key, value]);
+
+  return [value, setValue];
+}
+
 function MovementIllustration() {
   return (
     <div aria-hidden="true" className="absolute bottom-0 right-0 flex h-full w-[43%] items-end justify-center overflow-hidden bg-gradient-to-br from-transparent from-15% to-[#d7ebf6]">
@@ -339,20 +360,34 @@ function ExercisesPage({ onWorkoutComplete, onViewProgress, assignedNames, docto
 
 function DoctorDashboard({ sessions, showNotice, feedback, setFeedback, assignments, setAssignments }) {
   const [selectedPatient, setSelectedPatient] = useState(null);
+  const [selectedSession, setSelectedSession] = useState(null);
   const [query, setQuery] = useState("");
   const filteredPatients = demoPatients.filter((patient) => `${patient.name} ${patient.id}`.toLowerCase().includes(query.toLowerCase()));
 
   if (selectedPatient) {
     const patientSessions = selectedPatient.id === "RA-2048" ? sessions : [];
     const assigned = assignments[selectedPatient.id] || (selectedPatient.id === "RA-2048" ? ["Arm rotation", "Squat", "Body twist"] : []);
+    if (selectedSession) {
+      return (
+        <section className="pb-6 pt-5">
+          <button onClick={() => setSelectedSession(null)} className="mb-5 inline-flex items-center gap-2 text-xs font-bold text-[#168b8c]"><span aria-hidden="true" className="text-lg">←</span> Back to {selectedPatient.name}</button>
+          <p className="mb-1 text-[9px] font-extrabold uppercase tracking-[1px] text-[#8995a5]">WORKOUT RESULT · DEMO</p>
+          <h1 className="font-display text-[25px] font-extrabold tracking-[-.8px] text-[#263b69]">{selectedSession.exerciseName}</h1>
+          <p className="mb-4 mt-1 text-xs text-[#8190a0]">{selectedPatient.name} · {new Date(selectedSession.completedAt).toLocaleString([], { dateStyle: "medium", timeStyle: "short" })}</p>
+          <div className="grid grid-cols-2 gap-2.5"><div className="rounded-[16px] bg-[#e8f2fb] p-3"><p className="mb-1 text-[9px] text-[#748598]">Session duration</p><p className="mb-0 font-display text-xl font-extrabold text-[#263b69]">{formatDuration(selectedSession.durationSeconds)}</p></div><div className="rounded-[16px] bg-[#e1f3ed] p-3"><p className="mb-1 text-[9px] text-[#748598]">Sample class</p><p className="mb-0 font-display text-xs font-extrabold text-[#263b69]">{selectedSession.exerciseLabel}</p></div></div>
+          <div className="mt-4 rounded-[18px] border border-[#edf0f3] p-4"><div className="flex items-center justify-between"><span className="font-display text-xs font-bold text-[#263b69]">Illustrative classification confidence</span><span className="font-display text-sm font-extrabold text-[#168b8c]">{selectedSession.score}%</span></div><div className="mt-3 h-2 overflow-hidden rounded-full bg-[#eef1f4]"><div className="h-full rounded-full bg-[#26a695]" style={{ width: `${selectedSession.score}%` }} /></div><p className="mb-0 mt-3 text-[9px] leading-relaxed text-[#8995a5]">This visualization uses a fixed sample score for the interface preview. It is not a measured or validated AI result.</p></div>
+          <div className="mt-3 rounded-[14px] bg-[#fff8ed] px-3 py-2.5 text-[9px] leading-relaxed text-[#886b46]">No patient video, pose sequence, or clinical assessment was stored for this demo session.</div>
+        </section>
+      );
+    }
     return (
       <section className="pb-6 pt-5">
         <button onClick={() => setSelectedPatient(null)} className="mb-5 inline-flex items-center gap-2 text-xs font-bold text-[#168b8c]"><span aria-hidden="true" className="text-lg">←</span> All patients</button>
         <div className="flex items-center gap-3"><span className="grid h-14 w-14 place-items-center rounded-full bg-[#e5edfa] font-display text-sm font-extrabold text-[#5878ab]">{selectedPatient.initials}</span><div><p className="mb-1 text-[9px] font-bold uppercase tracking-[.8px] text-[#8995a5]">{selectedPatient.id} · DEMO PATIENT</p><h1 className="mb-0 font-display text-xl font-extrabold text-[#263b69]">{selectedPatient.name}</h1></div></div>
         <div className="mt-4 grid grid-cols-2 gap-2.5"><div className="rounded-[16px] bg-[#e8f2fb] p-3"><p className="mb-1 text-[9px] text-[#748598]">Care plan</p><p className="mb-0 font-display text-xs font-bold text-[#263b69]">{selectedPatient.condition}</p></div><div className="rounded-[16px] bg-[#e1f3ed] p-3"><p className="mb-1 text-[9px] text-[#748598]">Recent activity</p><p className="mb-0 font-display text-xs font-bold text-[#263b69]">{patientSessions.length} demo sessions</p></div></div>
-        <div className="mt-5"><div className="flex items-center justify-between"><h2 className="mb-0 font-display text-sm font-bold text-[#263b69]">Exercise assignment</h2><span className="text-[9px] text-[#8995a5]">Prototype</span></div><div className="mt-2 rounded-[17px] border border-[#edf0f3] p-3"><div className="max-h-48 space-y-2 overflow-y-auto">{exerciseCatalog.map((exercise) => <label key={exercise.id} className="flex items-center gap-2 text-[11px] text-[#34415a]"><input type="checkbox" checked={assigned.includes(exercise.name)} onChange={(event) => setAssignments((current) => ({ ...current, [selectedPatient.id]: event.target.checked ? [...assigned, exercise.name] : assigned.filter((name) => name !== exercise.name) }))} className="accent-[#168b8c]" />{exercise.name}</label>)}</div><button onClick={() => showNotice("Demo assignment saved for this screen only.")} className="mt-3 min-h-9 w-full rounded-[11px] bg-[#237eae] text-[10px] font-bold text-white">Save assignment</button></div></div>
-        <div className="mt-5"><h2 className="mb-2 font-display text-sm font-bold text-[#263b69]">Workout results</h2>{patientSessions.length ? <div className="space-y-2">{patientSessions.map((session) => <div key={session.id} className="rounded-[15px] border border-[#edf0f3] p-3"><div className="flex justify-between"><span className="font-display text-xs font-bold text-[#263b69]">{session.exerciseName}</span><span className="rounded-full bg-[#fff4df] px-2 py-1 text-[8px] font-bold text-[#9b7441]">DEMO</span></div><p className="mb-0 mt-1 text-[9px] text-[#8995a5]">{new Date(session.completedAt).toLocaleString([], { dateStyle: "medium", timeStyle: "short" })} · {formatDuration(session.durationSeconds)}</p></div>)}</div> : <div className="rounded-[15px] bg-[#f5f8fa] p-3 text-[10px] text-[#8995a5]">No demo workout records available.</div>}</div>
-        <div className="mt-5"><h2 className="mb-2 font-display text-sm font-bold text-[#263b69]">Doctor feedback</h2><textarea value={feedback[selectedPatient.id] || ""} onChange={(event) => setFeedback((current) => ({ ...current, [selectedPatient.id]: event.target.value }))} placeholder="Write a note for this patient..." rows="3" className="w-full resize-none rounded-[15px] border border-[#e5eaf0] p-3 text-xs text-[#34415a] outline-none focus:border-[#168b8c]" /><button onClick={() => showNotice("Demo feedback saved for this screen only.")} className="mt-2 min-h-10 w-full rounded-[12px] border border-[#cfdde6] text-[10px] font-bold text-[#237eae]">Save feedback</button></div>
+        <div className="mt-5"><div className="flex items-center justify-between"><h2 className="mb-0 font-display text-sm font-bold text-[#263b69]">Exercise assignment</h2><span className="text-[9px] text-[#8995a5]">Prototype</span></div><div className="mt-2 rounded-[17px] border border-[#edf0f3] p-3"><div className="max-h-48 space-y-2 overflow-y-auto">{exerciseCatalog.map((exercise) => <label key={exercise.id} className="flex items-center gap-2 text-[11px] text-[#34415a]"><input type="checkbox" checked={assigned.includes(exercise.name)} onChange={(event) => setAssignments((current) => ({ ...current, [selectedPatient.id]: event.target.checked ? [...assigned, exercise.name] : assigned.filter((name) => name !== exercise.name) }))} className="accent-[#168b8c]" />{exercise.name}</label>)}</div><button onClick={() => showNotice("Demo assignment saved in this browser.")} className="mt-3 min-h-9 w-full rounded-[11px] bg-[#237eae] text-[10px] font-bold text-white">Save assignment</button></div></div>
+        <div className="mt-5"><h2 className="mb-2 font-display text-sm font-bold text-[#263b69]">Workout results</h2>{patientSessions.length ? <div className="space-y-2">{patientSessions.map((session) => <button key={session.id} onClick={() => setSelectedSession(session)} className="w-full rounded-[15px] border border-[#edf0f3] p-3 text-left transition hover:border-[#c7e4df]"><div className="flex justify-between"><span className="font-display text-xs font-bold text-[#263b69]">{session.exerciseName}</span><span className="rounded-full bg-[#fff4df] px-2 py-1 text-[8px] font-bold text-[#9b7441]">DEMO</span></div><p className="mb-0 mt-1 text-[9px] text-[#8995a5]">{new Date(session.completedAt).toLocaleString([], { dateStyle: "medium", timeStyle: "short" })} · {formatDuration(session.durationSeconds)}</p><span className="mt-2 block text-[9px] font-bold text-[#168b8c]">Review result →</span></button>)}</div> : <div className="rounded-[15px] bg-[#f5f8fa] p-3 text-[10px] text-[#8995a5]">No demo workout records available.</div>}</div>
+        <div className="mt-5"><h2 className="mb-2 font-display text-sm font-bold text-[#263b69]">Doctor feedback</h2><textarea value={feedback[selectedPatient.id] || ""} onChange={(event) => setFeedback((current) => ({ ...current, [selectedPatient.id]: event.target.value }))} placeholder="Write a note for this patient..." rows="3" className="w-full resize-none rounded-[15px] border border-[#e5eaf0] p-3 text-xs text-[#34415a] outline-none focus:border-[#168b8c]" /><button onClick={() => showNotice("Demo feedback saved in this browser.")} className="mt-2 min-h-10 w-full rounded-[12px] border border-[#cfdde6] text-[10px] font-bold text-[#237eae]">Save feedback</button></div>
         <p className="mb-0 mt-4 rounded-[14px] bg-[#fff8ed] px-3 py-2.5 text-[9px] leading-relaxed text-[#886b46]">All patient records and actions are sample UI only. Nothing is sent or saved to a clinical system.</p>
       </section>
     );
@@ -374,9 +409,9 @@ function App() {
   const [activePage, setActivePage] = useState("Home");
   const [userMode, setUserMode] = useState("Patient");
   const [notice, setNotice] = useState("");
-  const [sessions, setSessions] = useState([]);
-  const [doctorFeedback, setDoctorFeedback] = useState({});
-  const [doctorAssignments, setDoctorAssignments] = useState({});
+  const [sessions, setSessions] = useStoredState("rehab-ai-demo-sessions", []);
+  const [doctorFeedback, setDoctorFeedback] = useStoredState("rehab-ai-demo-feedback", {});
+  const [doctorAssignments, setDoctorAssignments] = useStoredState("rehab-ai-demo-assignments", {});
   const patientAssignments = doctorAssignments["RA-2048"] || ["Arm rotation", "Squat", "Body twist"];
   const appNavigation = userMode === "Doctor" ? [{ label: "Home", icon: "home" }, { label: "Patients", icon: "list" }, { label: "Profile", icon: "user" }] : navigation;
 
@@ -455,7 +490,7 @@ function App() {
           <article className="min-h-[122px] rounded-[18px] border border-[#edf0f3] bg-white p-3 shadow-sm shadow-[#293f5c0a]">
             <div className="flex items-center justify-between"><div className="grid h-[25px] w-[25px] place-items-center rounded-[9px] bg-[#eef4ff] text-[#5878ab]"><Icon name="sparkle" className="h-4 w-4" /></div><span className="rounded-full bg-[#fef2e9] px-[7px] py-1 text-[8px] font-bold text-[#bc8050]">1 new</span></div>
             <div className="mt-2 text-[9px] text-[#8390a0]">Doctor feedback</div>
-            <div className="mt-[5px] overflow-hidden text-ellipsis whitespace-nowrap font-display text-[10px] font-bold text-[#34435b]">{feedback["RA-2048"] || "No new feedback yet."}</div>
+            <div className="mt-[5px] overflow-hidden text-ellipsis whitespace-nowrap font-display text-[10px] font-bold text-[#34435b]">{doctorFeedback["RA-2048"] || "No new feedback yet."}</div>
             <button onClick={() => setActivePage("Exercises")} className="mt-[7px] text-[9px] font-bold text-[#168b8c]">Open exercise details <span>→</span></button>
           </article>
         </section>
