@@ -43,6 +43,12 @@ const exerciseCatalog = [
   { id: "swing-arm-walk", name: "Swing arm walk", assigned: false, label: "SwingArmWalk", tone: "bg-[#e8eef9]", icon: "exercise" },
 ];
 
+const demoPatients = [
+  { id: "RA-2048", name: "Kushagra Misra", initials: "KM", condition: "Recovery plan", latest: "Squat · today", status: "Active" },
+  { id: "RA-1832", name: "Aarav Shah", initials: "AS", condition: "Mobility plan", latest: "Arm rotation · yesterday", status: "Review" },
+  { id: "RA-1657", name: "Maya Patel", initials: "MP", condition: "Strength plan", latest: "Body twist · Sep 29", status: "Active" },
+];
+
 function Icon({ name, className = "h-5 w-5", filled = false }) {
   const common = {
     className,
@@ -330,10 +336,47 @@ function ExercisesPage({ onWorkoutComplete, onViewProgress }) {
   );
 }
 
+function DoctorDashboard({ sessions, showNotice }) {
+  const [selectedPatient, setSelectedPatient] = useState(null);
+  const [query, setQuery] = useState("");
+  const [feedback, setFeedback] = useState({});
+  const [assignments, setAssignments] = useState({});
+  const filteredPatients = demoPatients.filter((patient) => `${patient.name} ${patient.id}`.toLowerCase().includes(query.toLowerCase()));
+
+  if (selectedPatient) {
+    const patientSessions = selectedPatient.id === "RA-2048" ? sessions : [];
+    const assigned = assignments[selectedPatient.id] || ["Arm rotation", "Squat", "Body twist"];
+    return (
+      <section className="pb-6 pt-5">
+        <button onClick={() => setSelectedPatient(null)} className="mb-5 inline-flex items-center gap-2 text-xs font-bold text-[#168b8c]"><span aria-hidden="true" className="text-lg">←</span> All patients</button>
+        <div className="flex items-center gap-3"><span className="grid h-14 w-14 place-items-center rounded-full bg-[#e5edfa] font-display text-sm font-extrabold text-[#5878ab]">{selectedPatient.initials}</span><div><p className="mb-1 text-[9px] font-bold uppercase tracking-[.8px] text-[#8995a5]">{selectedPatient.id} · DEMO PATIENT</p><h1 className="mb-0 font-display text-xl font-extrabold text-[#263b69]">{selectedPatient.name}</h1></div></div>
+        <div className="mt-4 grid grid-cols-2 gap-2.5"><div className="rounded-[16px] bg-[#e8f2fb] p-3"><p className="mb-1 text-[9px] text-[#748598]">Care plan</p><p className="mb-0 font-display text-xs font-bold text-[#263b69]">{selectedPatient.condition}</p></div><div className="rounded-[16px] bg-[#e1f3ed] p-3"><p className="mb-1 text-[9px] text-[#748598]">Recent activity</p><p className="mb-0 font-display text-xs font-bold text-[#263b69]">{patientSessions.length} demo sessions</p></div></div>
+        <div className="mt-5"><div className="flex items-center justify-between"><h2 className="mb-0 font-display text-sm font-bold text-[#263b69]">Exercise assignment</h2><span className="text-[9px] text-[#8995a5]">Prototype</span></div><div className="mt-2 rounded-[17px] border border-[#edf0f3] p-3"><div className="max-h-48 space-y-2 overflow-y-auto">{exerciseCatalog.map((exercise) => <label key={exercise.id} className="flex items-center gap-2 text-[11px] text-[#34415a]"><input type="checkbox" checked={assigned.includes(exercise.name)} onChange={(event) => setAssignments((current) => ({ ...current, [selectedPatient.id]: event.target.checked ? [...assigned, exercise.name] : assigned.filter((name) => name !== exercise.name) }))} className="accent-[#168b8c]" />{exercise.name}</label>)}</div><button onClick={() => showNotice("Demo assignment saved for this screen only.")} className="mt-3 min-h-9 w-full rounded-[11px] bg-[#237eae] text-[10px] font-bold text-white">Save assignment</button></div></div>
+        <div className="mt-5"><h2 className="mb-2 font-display text-sm font-bold text-[#263b69]">Workout results</h2>{patientSessions.length ? <div className="space-y-2">{patientSessions.map((session) => <div key={session.id} className="rounded-[15px] border border-[#edf0f3] p-3"><div className="flex justify-between"><span className="font-display text-xs font-bold text-[#263b69]">{session.exerciseName}</span><span className="rounded-full bg-[#fff4df] px-2 py-1 text-[8px] font-bold text-[#9b7441]">DEMO</span></div><p className="mb-0 mt-1 text-[9px] text-[#8995a5]">{new Date(session.completedAt).toLocaleString([], { dateStyle: "medium", timeStyle: "short" })} · {formatDuration(session.durationSeconds)}</p></div>)}</div> : <div className="rounded-[15px] bg-[#f5f8fa] p-3 text-[10px] text-[#8995a5]">No demo workout records available.</div>}</div>
+        <div className="mt-5"><h2 className="mb-2 font-display text-sm font-bold text-[#263b69]">Doctor feedback</h2><textarea value={feedback[selectedPatient.id] || ""} onChange={(event) => setFeedback((current) => ({ ...current, [selectedPatient.id]: event.target.value }))} placeholder="Write a note for this patient..." rows="3" className="w-full resize-none rounded-[15px] border border-[#e5eaf0] p-3 text-xs text-[#34415a] outline-none focus:border-[#168b8c]" /><button onClick={() => showNotice("Demo feedback saved for this screen only.")} className="mt-2 min-h-10 w-full rounded-[12px] border border-[#cfdde6] text-[10px] font-bold text-[#237eae]">Save feedback</button></div>
+        <p className="mb-0 mt-4 rounded-[14px] bg-[#fff8ed] px-3 py-2.5 text-[9px] leading-relaxed text-[#886b46]">All patient records and actions are sample UI only. Nothing is sent or saved to a clinical system.</p>
+      </section>
+    );
+  }
+
+  return (
+    <section className="pb-6 pt-5">
+      <p className="mb-1 text-[9px] font-extrabold uppercase tracking-[1px] text-[#8995a5]">CARE TEAM · DEMO</p><h1 className="font-display text-[25px] font-extrabold tracking-[-.8px] text-[#263b69]">Patient overview</h1><p className="mb-5 mt-1 text-xs text-[#8190a0]">Review activity and manage sample care plans.</p>
+      <div className="grid grid-cols-2 gap-2.5"><div className="rounded-[16px] bg-[#e8f2fb] p-3"><p className="mb-1 text-[9px] text-[#748598]">Patients</p><p className="mb-0 font-display text-xl font-extrabold text-[#263b69]">{demoPatients.length}</p></div><div className="rounded-[16px] bg-[#e1f3ed] p-3"><p className="mb-1 text-[9px] text-[#748598]">Needs review</p><p className="mb-0 font-display text-xl font-extrabold text-[#263b69]">1</p></div></div>
+      <label className="mt-4 flex h-11 items-center gap-2 rounded-[13px] border border-[#e8edf1] px-3 text-[#8995a5]"><Icon name="user" className="h-4 w-4"/><input value={query} onChange={(event) => setQuery(event.target.value)} aria-label="Search patients" placeholder="Search patients" className="w-full bg-transparent text-xs text-[#34415a] outline-none placeholder:text-[#a0a9b3]" /></label>
+      <div className="mt-5 flex items-center justify-between"><h2 className="mb-0 font-display text-sm font-bold text-[#263b69]">Your patients</h2><span className="text-[9px] text-[#8995a5]">{filteredPatients.length} shown</span></div>
+      <div className="mt-3 space-y-2.5">{filteredPatients.map((patient) => <button key={patient.id} onClick={() => setSelectedPatient(patient)} className="flex w-full items-center gap-3 rounded-[17px] border border-[#edf0f3] p-3 text-left transition hover:border-[#c7e4df]"><span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[#e5edfa] font-display text-[11px] font-extrabold text-[#5878ab]">{patient.initials}</span><span className="min-w-0 flex-1"><span className="flex items-center gap-2"><span className="font-display text-xs font-bold text-[#263750]">{patient.name}</span><span className={`rounded-full px-2 py-0.5 text-[8px] font-bold ${patient.status === "Review" ? "bg-[#fff4df] text-[#9b7441]" : "bg-[#e7f5ef] text-[#23836f]"}`}>{patient.status}</span></span><span className="mt-1 block text-[9px] text-[#8995a5]">{patient.id} · {patient.latest}</span></span><span aria-hidden="true" className="text-xl text-[#9ba5b1]">›</span></button>)}{filteredPatients.length === 0 && <p className="rounded-[15px] bg-[#f5f8fa] p-4 text-center text-xs text-[#8995a5]">No matching patients.</p>}</div>
+      <p className="mb-0 mt-4 rounded-[14px] bg-[#fff8ed] px-3 py-2.5 text-[9px] leading-relaxed text-[#886b46]">Demo patient data only. This dashboard is not connected to real patient records.</p>
+    </section>
+  );
+}
+
 function App() {
   const [activePage, setActivePage] = useState("Home");
+  const [userMode, setUserMode] = useState("Patient");
   const [notice, setNotice] = useState("");
   const [sessions, setSessions] = useState([]);
+  const appNavigation = userMode === "Doctor" ? [{ label: "Home", icon: "home" }, { label: "Patients", icon: "list" }, { label: "Profile", icon: "user" }] : navigation;
 
   useEffect(() => {
     if (!notice) return undefined;
@@ -357,16 +400,18 @@ function App() {
       </header>
 
       <main id="home">
-        <section aria-label="Patient account" className="flex min-h-[67px] items-center gap-[11px] border-b border-[#edf0f3] py-2">
-          <div aria-hidden="true" className="grid h-[42px] w-[42px] shrink-0 place-items-center rounded-full bg-[#e4f2ef] font-display text-xs font-extrabold text-[#167d78]">KM</div>
+        <section aria-label={`${userMode} account`} className="flex min-h-[67px] items-center gap-[11px] border-b border-[#edf0f3] py-2">
+          <div aria-hidden="true" className="grid h-[42px] w-[42px] shrink-0 place-items-center rounded-full bg-[#e4f2ef] font-display text-xs font-extrabold text-[#167d78]">{userMode === "Doctor" ? "DR" : "KM"}</div>
           <div className="min-w-0 flex-1">
-            <div className="font-display text-sm font-bold text-[#273550]">Kushagra Misra <span title="Patient profile" className="ml-0.5 inline-grid h-[15px] w-[15px] place-items-center rounded-full bg-[#dff3ee] text-[10px] font-bold text-[#198a7e]">✓</span></div>
-            <div className="mt-[3px] text-[11px] text-[#8691a0]">Patient account <span className="px-[3px]">·</span> ID RA-2048</div>
+            <div className="font-display text-sm font-bold text-[#273550]">{userMode === "Doctor" ? "Dr. Taylor Morgan" : "Kushagra Misra"} <span title="Demo profile" className="ml-0.5 inline-grid h-[15px] w-[15px] place-items-center rounded-full bg-[#dff3ee] text-[10px] font-bold text-[#198a7e]">✓</span></div>
+            <div className="mt-[3px] text-[11px] text-[#8691a0]">{userMode} account <span className="px-[3px]">·</span> Demo</div>
           </div>
-          <button onClick={() => showNotice("Profile settings are coming in a later part.")} aria-label="Profile options" className="grid h-[34px] w-[34px] place-items-center rounded-[14px] text-[#718097]"><Icon name="more" className="h-[22px] w-[22px]" /></button>
+          <button onClick={() => { setUserMode((mode) => mode === "Patient" ? "Doctor" : "Patient"); setActivePage("Home"); }} aria-label={`Switch to ${userMode === "Patient" ? "doctor" : "patient"} demo view`} className="rounded-[11px] bg-[#f1f5f8] px-2.5 py-2 text-[9px] font-bold text-[#52617a]">{userMode === "Patient" ? "Doctor view" : "Patient view"}</button>
         </section>
 
-        {activePage === "Exercises" ? (
+        {userMode === "Doctor" ? (
+          <DoctorDashboard sessions={sessions} showNotice={showNotice} />
+        ) : activePage === "Exercises" ? (
           <ExercisesPage onWorkoutComplete={(session) => setSessions((current) => [session, ...current])} onViewProgress={() => setActivePage("Progress")} />
         ) : activePage === "Progress" ? (
           <ProgressPage sessions={sessions} />
@@ -423,9 +468,9 @@ function App() {
       </main>
 
       <nav aria-label="Main navigation" className="fixed bottom-0 left-1/2 z-20 grid min-h-[72px] w-full max-w-[480px] -translate-x-1/2 grid-cols-4 border-t border-[#edf0f3] bg-white/95 px-[10px] pb-[calc(8px+env(safe-area-inset-bottom))] pt-2 backdrop-blur sm:bottom-7 sm:rounded-b-[28px]">
-        {navigation.map((item) => {
+        {appNavigation.map((item) => {
           const active = activePage === item.label;
-          return <button key={item.label} aria-current={active ? "page" : undefined} onClick={() => { if (item.label === "Home" || item.label === "Exercises" || item.label === "Progress") setActivePage(item.label); else showNotice(`${item.label} will be built in a later part.`); }} className={`flex flex-col items-center justify-center gap-1 text-[9px] ${active ? "font-bold text-[#167eab]" : "text-[#8a96a6]"}`}>
+          return <button key={item.label} aria-current={active ? "page" : undefined} onClick={() => { if (item.label === "Home" || item.label === "Exercises" || item.label === "Progress" || item.label === "Patients") setActivePage(item.label); else showNotice(`${item.label} settings are planned for a later part.`); }} className={`flex flex-col items-center justify-center gap-1 text-[9px] ${active ? "font-bold text-[#167eab]" : "text-[#8a96a6]"}`}>
             <Icon name={item.icon} className="h-[21px] w-[21px]" /><span>{item.label}</span>
           </button>;
         })}
