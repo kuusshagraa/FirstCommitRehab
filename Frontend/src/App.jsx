@@ -65,6 +65,7 @@ function Icon({ name, className = "h-5 w-5", filled = false }) {
     heart: <path d="M20.8 8.8c0 5.2-8.8 10.2-8.8 10.2S3.2 14 3.2 8.8A4.6 4.6 0 0 1 12 6.5a4.6 4.6 0 0 1 8.8 2.3Z" />,
     sparkle: <path d="m12 3 1.8 6.2L20 11l-6.2 1.8L12 19l-1.8-6.2L4 11l6.2-1.8L12 3Zm7 12 .9 2.1L22 18l-2.1.9L19 21l-.9-2.1L16 18l2.1-.9L19 15Z" />,
     calendar: <><rect x="3" y="5" width="18" height="16" rx="3" /><path d="M7 3v4m10-4v4M3 10h18M8 14h3m-3 3h6" /></>,
+    camera: <><path d="M4 7h3l2-3h6l2 3h3a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2Z" /><circle cx="12" cy="13" r="3.5" /></>,
     home: <path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1V10Z" />,
     list: <path d="M4 5h16v15H4zM8 9h8m-8 4h8m-8 4h5" />,
     trend: <path d="M4 19V5m0 14h17M8 15l4-5 3 3 5-7" />,
@@ -138,18 +139,116 @@ function ExerciseDetails({ exercise, onBack, onStartWorkout }) {
       <button onClick={onStartWorkout} className="mt-5 flex min-h-12 w-full items-center justify-center gap-2 rounded-[14px] bg-[#237eae] text-sm font-bold text-white shadow-md shadow-[#237eae2b]">
         Start exercise <span aria-hidden="true">→</span>
       </button>
-      <p className="mt-2 text-center text-[9px] text-[#8995a5]">Camera workout controls are planned for the next part.</p>
+      <p className="mt-2 text-center text-[9px] text-[#8995a5]">Opens an illustrative session preview; camera and AI are not connected.</p>
     </section>
   );
 }
 
-function ExercisesPage({ onStartWorkout }) {
+function WorkoutSession({ exercise, onBack }) {
+  const [isRunning, setIsRunning] = useState(false);
+  const [elapsed, setElapsed] = useState(0);
+  const [showPose, setShowPose] = useState(true);
+  const [completed, setCompleted] = useState(false);
+
+  useEffect(() => {
+    if (!isRunning) return undefined;
+    const timerId = window.setInterval(() => setElapsed((seconds) => seconds + 1), 1000);
+    return () => window.clearInterval(timerId);
+  }, [isRunning]);
+
+  const time = `${String(Math.floor(elapsed / 60)).padStart(2, "0")}:${String(elapsed % 60).padStart(2, "0")}`;
+
+  if (completed) {
+    return (
+      <section className="flex min-h-[65vh] flex-col items-center justify-center py-8 text-center">
+        <div className="grid h-16 w-16 place-items-center rounded-full bg-[#e1f3ed] text-[#198a7e]"><Icon name="check" className="h-8 w-8" /></div>
+        <p className="mb-1 mt-5 text-[9px] font-extrabold uppercase tracking-[1px] text-[#8995a5]">DEMO SESSION</p>
+        <h1 className="font-display text-2xl font-extrabold text-[#263b69]">Workout ended</h1>
+        <p className="mt-2 max-w-[270px] text-xs leading-relaxed text-[#778397]">Your session screen is complete. Session summaries and history are planned for Part 4.</p>
+        <div className="mt-5 w-full rounded-[18px] border border-[#edf0f3] p-4 text-left">
+          <div className="text-[9px] font-bold uppercase tracking-[.8px] text-[#8995a5]">Exercise</div>
+          <div className="mt-1 font-display text-sm font-bold text-[#263b69]">{exercise.name}</div>
+          <div className="mt-3 text-[9px] font-bold uppercase tracking-[.8px] text-[#8995a5]">Elapsed time</div>
+          <div className="mt-1 font-display text-sm font-bold text-[#263b69]">{time}</div>
+          <p className="mb-0 mt-3 border-t border-[#edf0f3] pt-3 text-[9px] text-[#8995a5]">No camera recording or AI analysis was performed.</p>
+        </div>
+        <button onClick={onBack} className="mt-5 min-h-11 w-full rounded-[14px] bg-[#237eae] text-xs font-bold text-white">Back to exercise</button>
+      </section>
+    );
+  }
+
+  return (
+    <section aria-labelledby="workout-title" className="pb-6 pt-5">
+      <button onClick={onBack} className="mb-4 inline-flex items-center gap-2 text-xs font-bold text-[#168b8c]"><span aria-hidden="true" className="text-lg">←</span> Back to exercise</button>
+      <div className="flex items-end justify-between">
+        <div>
+          <p className="mb-1 text-[9px] font-extrabold uppercase tracking-[1px] text-[#8995a5]">GUIDED WORKOUT · DEMO</p>
+          <h1 id="workout-title" className="font-display text-[23px] font-extrabold tracking-[-.6px] text-[#263b69]">{exercise.name}</h1>
+        </div>
+        <div className="font-display text-sm font-bold tabular-nums text-[#263b69]">{time}</div>
+      </div>
+
+      <div className="relative mt-4 flex h-[310px] items-center justify-center overflow-hidden rounded-[22px] bg-gradient-to-b from-[#1e2e4c] to-[#354c70]">
+        <div className="absolute inset-x-5 bottom-5 h-20 rounded-[50%] border border-white/10" />
+        <div className="absolute left-3 top-3 flex items-center gap-1.5 rounded-full border border-white/10 bg-white/10 px-2.5 py-1.5 text-[8px] font-bold text-white/80">
+          <Icon name="camera" className="h-3 w-3" /> DEMO CAMERA FRAME
+        </div>
+        <span className="absolute right-3 top-3 flex items-center gap-1.5 rounded-full bg-white/10 px-2.5 py-1.5 text-[8px] font-semibold text-white/75">
+          <span className={`h-1.5 w-1.5 rounded-full ${isRunning ? "animate-pulse bg-[#59ddb1]" : "bg-[#f3c979]"}`} /> {isRunning ? "Tracking demo" : "Preview paused"}
+        </span>
+        <svg viewBox="0 0 180 250" className="relative z-10 h-[235px] w-[170px]" fill="none" aria-hidden="true">
+          <circle cx="90" cy="34" r="18" fill="#e9b99d" />
+          <path d="M72 33c1-18 28-24 37-6 2 4 1 9-1 12-6-6-14-8-25-5l-11 3Z" fill="#b7c4dc" />
+          <path d="m70 61 39-1 18 66-17 36H72l-14-37 12-64Z" fill="#d8e3ee" stroke="#91a8c5" strokeWidth="3" />
+          <path d="m72 68-29 44-19 31m84-81 29 40 18-13" stroke="#e9b99d" strokeWidth="13" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="m73 157-7 46-19 27m44-71 15 47 27 13" stroke="#aebdd4" strokeWidth="15" strokeLinecap="round" strokeLinejoin="round" />
+          {showPose && <g stroke="#62dec0" strokeWidth="2" fill="#62dec0">
+            <path d="m90 52-1 23-3 23m-1-20-26 21-16 16m46-36 25 18 19 3m-43-2-12 40-8 40m20-40 7 40 17 22" fill="none" strokeLinecap="round" />
+            <circle cx="90" cy="52" r="3"/><circle cx="89" cy="75" r="3"/><circle cx="86" cy="98" r="3"/><circle cx="60" cy="119" r="3"/><circle cx="44" cy="115" r="3"/><circle cx="115" cy="97" r="3"/><circle cx="134" cy="100" r="3"/><circle cx="74" cy="138" r="3"/><circle cx="66" cy="178" r="3"/><circle cx="98" cy="138" r="3"/><circle cx="105" cy="178" r="3"/>
+          </g>}
+        </svg>
+        <div className="absolute bottom-3 left-3 right-3 rounded-xl border border-white/10 bg-[#13223d]/80 px-3 py-2 text-left text-[9px] leading-relaxed text-white/75">
+          This is an illustrative preview. Camera and AI tracking are not connected.
+        </div>
+      </div>
+
+      <div className="mt-3 flex items-center justify-between rounded-[16px] border border-[#edf0f3] px-3 py-3">
+        <div className="flex items-center gap-2.5">
+          <span className="grid h-9 w-9 place-items-center rounded-xl bg-[#eef4ff] text-[#5878ab]"><Icon name="exercise" className="h-5 w-5" /></span>
+          <div><p className="mb-0 text-[8px] font-bold uppercase tracking-[.8px] text-[#8995a5]">{isRunning ? "Sample detection" : "Ready when you are"}</p><p className="mb-0 mt-0.5 font-display text-xs font-bold text-[#263b69]">{isRunning ? exercise.label : "No live analysis"}</p></div>
+        </div>
+        {isRunning && <div className="text-right"><p className="mb-0 text-[8px] font-bold uppercase tracking-[.7px] text-[#8995a5]">Sample score</p><p className="mb-0 mt-0.5 font-display text-sm font-extrabold text-[#168b8c]">92%</p></div>}
+      </div>
+
+      <button role="switch" aria-checked={showPose} onClick={() => setShowPose((value) => !value)} className="mt-3 flex min-h-11 w-full items-center justify-between rounded-[15px] bg-[#f5f8fa] px-3 text-left">
+        <span><span className="block text-[10px] font-bold text-[#34415a]">Pose keypoint overlay</span><span className="mt-0.5 block text-[9px] text-[#8995a5]">Show the illustrative skeleton points</span></span>
+        <span className={`relative h-6 w-11 rounded-full transition ${showPose ? "bg-[#168b8c]" : "bg-[#cbd3dc]"}`}><span className={`absolute top-[3px] h-[18px] w-[18px] rounded-full bg-white shadow transition-all ${showPose ? "left-[21px]" : "left-[3px]"}`} /></span>
+      </button>
+
+      <div className="mt-3 rounded-[15px] bg-[#fff8ed] px-3 py-2.5 text-[9px] leading-relaxed text-[#886b46]">
+        Demo only: the classification and 92% score are sample UI values, not a real movement assessment.
+      </div>
+
+      <div className="mt-4 grid grid-cols-2 gap-2.5">
+        <button onClick={() => setIsRunning((value) => !value)} className="min-h-12 rounded-[14px] bg-[#237eae] text-xs font-bold text-white shadow-md shadow-[#237eae2b]">{isRunning ? "Pause" : elapsed > 0 ? "Resume" : "Start tracking"}</button>
+        <button onClick={() => { setIsRunning(false); setCompleted(true); }} disabled={!isRunning && elapsed === 0} className="min-h-12 rounded-[14px] border border-[#dce3e9] text-xs font-bold text-[#53637a] disabled:cursor-not-allowed disabled:opacity-45">Finish session</button>
+      </div>
+    </section>
+  );
+}
+
+function ExercisesPage() {
   const [tab, setTab] = useState("Assigned");
   const [selected, setSelected] = useState(null);
+  const [workoutOpen, setWorkoutOpen] = useState(false);
   const exercises = tab === "Assigned" ? exerciseCatalog.filter((exercise) => exercise.assigned) : exerciseCatalog;
 
+  if (workoutOpen && selected) {
+    return <WorkoutSession exercise={selected} onBack={() => setWorkoutOpen(false)} />;
+  }
+
   if (selected) {
-    return <ExerciseDetails exercise={selected} onBack={() => setSelected(null)} onStartWorkout={onStartWorkout} />;
+    return <ExerciseDetails exercise={selected} onBack={() => setSelected(null)} onStartWorkout={() => setWorkoutOpen(true)} />;
   }
 
   return (
@@ -222,7 +321,7 @@ function App() {
         </section>
 
         {activePage === "Exercises" ? (
-          <ExercisesPage onStartWorkout={() => showNotice("Live camera workout will be built in Part 3.")} />
+          <ExercisesPage />
         ) : (
           <>
         <section className="pb-[17px] pt-[21px]">
@@ -246,7 +345,7 @@ function App() {
             <div className="flex items-center gap-1.5 text-[8px] font-extrabold tracking-[.85px] text-[#50809b]"><span className="h-[7px] w-[7px] rounded-full bg-[#24a69a] shadow-[0_0_0_3px_#24a69a21]" /> YOUR PLAN TODAY</div>
             <h2 id="today-title" className="mb-1.5 mt-[11px] font-display text-xl font-extrabold leading-[1.18] tracking-[-.6px] text-[#263b69] max-[360px]:text-lg">Ready for a<br />guided session?</h2>
             <p className="mb-[11px] max-w-[195px] text-[10px] leading-[1.45] text-[#748598]">Follow your plan at your own pace. Your doctor can review your movement after.</p>
-            <button onClick={() => showNotice("Workout mode will be built in Part 3.")} className="inline-flex min-h-[34px] items-center gap-[13px] rounded-[11px] bg-[#237eae] px-[13px] text-[10px] font-bold text-white shadow-md shadow-[#237eae2b]">Start workout <span className="text-[15px]">→</span></button>
+            <button onClick={() => setActivePage("Exercises")} className="inline-flex min-h-[34px] items-center gap-[13px] rounded-[11px] bg-[#237eae] px-[13px] text-[10px] font-bold text-white shadow-md shadow-[#237eae2b]">Start workout <span className="text-[15px]">→</span></button>
           </div>
           <MovementIllustration />
         </section>
