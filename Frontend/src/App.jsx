@@ -31,6 +31,18 @@ const navigation = [
   { label: "Profile", icon: "user" },
 ];
 
+const exerciseCatalog = [
+  { id: "arm-rotation", name: "Arm rotation", assigned: true, label: "ArmRotation", tone: "bg-[#e1f3ed]", icon: "exercise" },
+  { id: "squat", name: "Squat", assigned: true, label: "Squat", tone: "bg-[#faeee2]", icon: "exercise" },
+  { id: "body-twist", name: "Body twist", assigned: true, label: "BodyTwist", tone: "bg-[#e8eef9]", icon: "exercise" },
+  { id: "arm-crossing", name: "Arm crossing", assigned: false, label: "ArmCrossing", tone: "bg-[#e1f3ed]", icon: "exercise" },
+  { id: "hip-rotation", name: "Hip rotation", assigned: false, label: "HipRotation", tone: "bg-[#faeee2]", icon: "exercise" },
+  { id: "body-rotation", name: "Body rotation", assigned: false, label: "BodyRotation", tone: "bg-[#e8eef9]", icon: "exercise" },
+  { id: "step-jack", name: "Step jack", assigned: false, label: "StepJack", tone: "bg-[#e1f3ed]", icon: "exercise" },
+  { id: "ab-twist", name: "Ab twist", assigned: false, label: "AbTwist", tone: "bg-[#faeee2]", icon: "exercise" },
+  { id: "swing-arm-walk", name: "Swing arm walk", assigned: false, label: "SwingArmWalk", tone: "bg-[#e8eef9]", icon: "exercise" },
+];
+
 function Icon({ name, className = "h-5 w-5", filled = false }) {
   const common = {
     className,
@@ -84,6 +96,96 @@ function MovementIllustration() {
   );
 }
 
+function ExerciseDetails({ exercise, onBack, onStartWorkout }) {
+  return (
+    <section aria-labelledby="exercise-detail-title" className="pb-6 pt-5">
+      <button onClick={onBack} className="mb-5 inline-flex items-center gap-2 text-xs font-bold text-[#168b8c]">
+        <span aria-hidden="true" className="text-lg">←</span> Back to exercises
+      </button>
+      <div className="flex items-center gap-3">
+        <span className={`grid h-14 w-14 place-items-center rounded-[18px] ${exercise.tone} text-[#298f83]`}><Icon name="exercise" className="h-8 w-8" /></span>
+        <div>
+          <p className="mb-1 text-[9px] font-extrabold uppercase tracking-[1px] text-[#8995a5]">{exercise.assigned ? "Assigned exercise · demo" : "Movement library · demo"}</p>
+          <h1 id="exercise-detail-title" className="font-display text-2xl font-extrabold tracking-[-.7px] text-[#263b69]">{exercise.name}</h1>
+        </div>
+      </div>
+
+      <div className="relative mt-5 flex min-h-[205px] flex-col items-center justify-center overflow-hidden rounded-[22px] bg-[#e8f2fb] px-5 text-center">
+        <div className="absolute -right-5 -top-8 h-40 w-40 rounded-full border border-[#a8ced6]" />
+        <div className="absolute -bottom-16 -left-8 h-44 w-44 rounded-full border border-dashed border-[#a8ced6]" />
+        <div className="relative z-10 grid h-14 w-14 place-items-center rounded-full bg-white/90 text-[#237eae] shadow-sm"><Icon name="play" className="h-7 w-7" /></div>
+        <p className="relative z-10 mb-1 mt-3 font-display text-sm font-bold text-[#263b69]">Exercise preview</p>
+        <p className="relative z-10 max-w-[230px] text-[10px] leading-relaxed text-[#748598]">A clinician-approved video guide will be added here.</p>
+        <span className="absolute bottom-3 right-3 rounded-full bg-white/80 px-2.5 py-1 text-[8px] font-bold text-[#718097]">PREVIEW NOT CONNECTED</span>
+      </div>
+
+      <div className="mt-4 rounded-[18px] border border-[#edf0f3] p-4">
+        <div className="flex items-center gap-2 font-display text-sm font-bold text-[#263b69]"><Icon name="list" className="h-4 w-4 text-[#168b8c]" /> Exercise instructions</div>
+        <p className="mb-0 mt-2 text-xs leading-relaxed text-[#778397]">Instructions for this movement have not been added to the prototype. Use the guidance provided by your care team.</p>
+      </div>
+
+      <div className="mt-3 rounded-[18px] bg-[#f3f7fb] p-4">
+        <p className="mb-1 text-[9px] font-extrabold uppercase tracking-[.9px] text-[#8995a5]">Assignment</p>
+        <p className="font-display text-xs font-bold text-[#34415a]">Assigned by your care team</p>
+        <p className="mt-1 text-[10px] text-[#778397]">Sample assignment shown for the frontend prototype.</p>
+      </div>
+
+      <div className="mt-3 rounded-[18px] border border-[#edf0f3] p-4">
+        <div className="flex items-center gap-2 font-display text-xs font-bold text-[#34415a]"><Icon name="sparkle" className="h-4 w-4 text-[#5878ab]" /> Doctor feedback</div>
+        <p className="mb-0 mt-2 text-[10px] leading-relaxed text-[#778397]">No feedback has been added to this sample assignment.</p>
+      </div>
+
+      <button onClick={onStartWorkout} className="mt-5 flex min-h-12 w-full items-center justify-center gap-2 rounded-[14px] bg-[#237eae] text-sm font-bold text-white shadow-md shadow-[#237eae2b]">
+        Start exercise <span aria-hidden="true">→</span>
+      </button>
+      <p className="mt-2 text-center text-[9px] text-[#8995a5]">Camera workout controls are planned for the next part.</p>
+    </section>
+  );
+}
+
+function ExercisesPage({ onStartWorkout }) {
+  const [tab, setTab] = useState("Assigned");
+  const [selected, setSelected] = useState(null);
+  const exercises = tab === "Assigned" ? exerciseCatalog.filter((exercise) => exercise.assigned) : exerciseCatalog;
+
+  if (selected) {
+    return <ExerciseDetails exercise={selected} onBack={() => setSelected(null)} onStartWorkout={onStartWorkout} />;
+  }
+
+  return (
+    <section aria-labelledby="exercises-title" className="pb-6 pt-5">
+      <p className="mb-1 text-[9px] font-extrabold uppercase tracking-[1px] text-[#8995a5]">YOUR MOVEMENT PLAN</p>
+      <h1 id="exercises-title" className="font-display text-[25px] font-extrabold tracking-[-.8px] text-[#263b69]">My exercises</h1>
+      <p className="mb-5 mt-1 text-xs text-[#8190a0]">Review your assignments and exercise guides.</p>
+
+      <div role="tablist" aria-label="Exercise list" className="mb-4 grid grid-cols-2 rounded-[14px] bg-[#f3f6f8] p-1">
+        {["Assigned", "All exercises"].map((item) => (
+          <button key={item} role="tab" aria-selected={tab === item} onClick={() => setTab(item)} className={`min-h-9 rounded-[11px] text-[11px] font-bold transition ${tab === item ? "bg-white text-[#263b69] shadow-sm" : "text-[#8995a5]"}`}>
+            {item}{item === "Assigned" ? " (3)" : " (9)"}
+          </button>
+        ))}
+      </div>
+
+      <div className="mb-3 flex items-start gap-2 rounded-[14px] bg-[#fff8ed] px-3 py-2.5 text-[9px] leading-relaxed text-[#886b46]">
+        <span className="font-bold">Note</span><span>These are prototype exercise names. Clinical instructions and assignments must come from your care team.</span>
+      </div>
+
+      <div className="space-y-2.5">
+        {exercises.map((exercise) => (
+          <button key={exercise.id} onClick={() => setSelected(exercise)} className="flex w-full items-center gap-3 rounded-[18px] border border-[#edf0f3] bg-white p-3 text-left shadow-sm shadow-[#293f5c0a] transition hover:border-[#c7e4df] hover:shadow-md">
+            <span className={`grid h-12 w-12 shrink-0 place-items-center rounded-[15px] ${exercise.tone} text-[#298f83}`}><Icon name="exercise" className="h-7 w-7" /></span>
+            <span className="min-w-0 flex-1">
+              <span className="flex items-center gap-2"><span className="font-display text-xs font-bold text-[#263750]">{exercise.name}</span>{exercise.assigned && <span className="rounded-full bg-[#e7f5ef] px-2 py-0.5 text-[8px] font-bold text-[#23836f]">Assigned</span>}</span>
+              <span className="mt-1 block text-[9px] text-[#8995a5]">{exercise.assigned ? "Sample assignment · instructions pending" : "Movement class from Rehab AI demo"}</span>
+            </span>
+            <span className="text-xl text-[#9ba5b1]" aria-hidden="true">›</span>
+          </button>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function App() {
   const [activePage, setActivePage] = useState("Home");
   const [notice, setNotice] = useState("");
@@ -119,6 +221,10 @@ function App() {
           <button onClick={() => showNotice("Profile settings are coming in a later part.")} aria-label="Profile options" className="grid h-[34px] w-[34px] place-items-center rounded-[14px] text-[#718097]"><Icon name="more" className="h-[22px] w-[22px]" /></button>
         </section>
 
+        {activePage === "Exercises" ? (
+          <ExercisesPage onStartWorkout={() => showNotice("Live camera workout will be built in Part 3.")} />
+        ) : (
+          <>
         <section className="pb-[17px] pt-[21px]">
           <p className="mb-[7px] text-[9px] font-bold tracking-[1.15px] text-[#8995a5]">FRIDAY, OCTOBER 2</p>
           <h1 className="font-display text-[27px] font-extrabold leading-[1.14] tracking-[-1.15px] text-[#253653]">Good morning,<br /><span className="text-[#168b8c]">Kushagra</span></h1>
@@ -127,7 +233,7 @@ function App() {
 
         <section aria-label="Rehabilitation services" className="grid grid-cols-3 gap-[10px] max-[360px]:gap-[7px]">
           {featureCards.map((card) => (
-            <button key={card.title} onClick={() => showNotice(card.message)} className={`${card.tone} flex min-h-[122px] min-w-0 flex-col items-center rounded-[20px] px-2 py-[13px] text-center transition hover:-translate-y-0.5 hover:shadow-lg max-[360px]:min-h-[114px] max-[360px]:px-1`}>
+            <button key={card.title} onClick={() => card.title === "My exercises" || card.title === "Exercise guide" ? setActivePage("Exercises") : showNotice(card.message)} className={`${card.tone} flex min-h-[122px] min-w-0 flex-col items-center rounded-[20px] px-2 py-[13px] text-center transition hover:-translate-y-0.5 hover:shadow-lg max-[360px]:min-h-[114px] max-[360px]:px-1`}>
               <span className="mb-[7px] grid h-10 w-10 place-items-center rounded-[14px] bg-white/75 text-[#298f83]"><Icon name={card.icon} className={`h-[29px] w-[29px] ${card.icon === "play" ? "text-[#ca875d]" : card.icon === "chart" ? "text-[#637dab]" : ""}`} /></span>
               <span className="w-full whitespace-nowrap font-display text-[11px] font-bold text-[#263750] max-[360px]:text-[10px]">{card.title}</span>
               <span className="mt-[3px] w-full text-[9px] text-[#7a8795]">{card.detail}</span>
@@ -165,12 +271,14 @@ function App() {
           <div><div className="text-[8px] font-extrabold tracking-[.8px] text-[#99a2ae]">UP NEXT</div><div className="mt-[3px] font-display text-[11px] font-bold text-[#34415a]">Arm rotations <span className="font-sans text-[9px] font-medium text-[#8994a1]">· 8 min</span></div></div>
           <span className="ml-auto text-[25px] text-[#9ba5b1]" aria-hidden="true">›</span>
         </section>
+          </>
+        )}
       </main>
 
       <nav aria-label="Main navigation" className="fixed bottom-0 left-1/2 z-20 grid min-h-[72px] w-full max-w-[480px] -translate-x-1/2 grid-cols-4 border-t border-[#edf0f3] bg-white/95 px-[10px] pb-[calc(8px+env(safe-area-inset-bottom))] pt-2 backdrop-blur sm:bottom-7 sm:rounded-b-[28px]">
         {navigation.map((item) => {
           const active = activePage === item.label;
-          return <button key={item.label} aria-current={active ? "page" : undefined} onClick={() => { setActivePage(item.label); if (item.label !== "Home") showNotice(`${item.label} will be built in a later part.`); }} className={`flex flex-col items-center justify-center gap-1 text-[9px] ${active ? "font-bold text-[#167eab]" : "text-[#8a96a6]"}`}>
+          return <button key={item.label} aria-current={active ? "page" : undefined} onClick={() => { if (item.label === "Home" || item.label === "Exercises") setActivePage(item.label); else showNotice(`${item.label} will be built in a later part.`); }} className={`flex flex-col items-center justify-center gap-1 text-[9px] ${active ? "font-bold text-[#167eab]" : "text-[#8a96a6]"}`}>
             <Icon name={item.icon} className="h-[21px] w-[21px]" /><span>{item.label}</span>
           </button>;
         })}
