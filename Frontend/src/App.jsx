@@ -144,11 +144,40 @@ function ExerciseDetails({ exercise, onBack, onStartWorkout }) {
   );
 }
 
-function WorkoutSession({ exercise, onBack }) {
+function formatDuration(seconds) {
+  return `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`;
+}
+
+function SessionSummary({ session, onBack, onViewProgress }) {
+  const completedAt = new Date(session.completedAt);
+  return (
+    <section aria-labelledby="session-summary-title" className="pb-6 pt-5">
+      <button onClick={onBack} className="mb-5 inline-flex items-center gap-2 text-xs font-bold text-[#168b8c]"><span aria-hidden="true" className="text-lg">←</span> Back</button>
+      <div className="flex flex-col items-center rounded-[22px] bg-[#e1f3ed] px-5 py-6 text-center">
+        <div className="grid h-14 w-14 place-items-center rounded-full bg-white text-[#198a7e]"><Icon name="check" className="h-7 w-7" /></div>
+        <p className="mb-1 mt-4 text-[9px] font-extrabold uppercase tracking-[1px] text-[#4e8c7d]">DEMO SESSION COMPLETE</p>
+        <h1 id="session-summary-title" className="font-display text-2xl font-extrabold text-[#263b69]">Nice work!</h1>
+        <p className="mb-0 mt-1 text-xs text-[#668078]">Your session has been added to history.</p>
+      </div>
+      <div className="mt-4 rounded-[18px] border border-[#edf0f3] p-4">
+        <div className="flex items-start justify-between gap-3"><div><p className="mb-1 text-[9px] font-bold uppercase tracking-[.8px] text-[#8995a5]">Exercise</p><p className="mb-0 font-display text-sm font-bold text-[#263b69]">{session.exerciseName}</p></div><span className="rounded-full bg-[#fff4df] px-2.5 py-1 text-[8px] font-bold text-[#9b7441]">DEMO</span></div>
+        <div className="mt-4 grid grid-cols-2 gap-3">
+          <div className="rounded-[13px] bg-[#f5f8fa] p-3"><p className="mb-1 text-[9px] text-[#8995a5]">Duration</p><p className="mb-0 font-display text-lg font-extrabold tabular-nums text-[#263b69]">{formatDuration(session.durationSeconds)}</p></div>
+          <div className="rounded-[13px] bg-[#f5f8fa] p-3"><p className="mb-1 text-[9px] text-[#8995a5]">Sample score</p><p className="mb-0 font-display text-lg font-extrabold text-[#168b8c]">{session.score}%</p></div>
+        </div>
+        <p className="mb-0 mt-3 text-[9px] text-[#8995a5]">{completedAt.toLocaleString([], { dateStyle: "medium", timeStyle: "short" })}</p>
+      </div>
+      <div className="mt-3 rounded-[14px] bg-[#fff8ed] px-3 py-2.5 text-[9px] leading-relaxed text-[#886b46]">Demo only: the score is a sample UI value. No camera recording or AI movement analysis was performed.</div>
+      <button onClick={onViewProgress} className="mt-5 min-h-12 w-full rounded-[14px] bg-[#237eae] text-xs font-bold text-white">View progress</button>
+    </section>
+  );
+}
+
+function WorkoutSession({ exercise, onBack, onComplete, onViewProgress }) {
   const [isRunning, setIsRunning] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const [showPose, setShowPose] = useState(true);
-  const [completed, setCompleted] = useState(false);
+  const [completedSession, setCompletedSession] = useState(null);
 
   useEffect(() => {
     if (!isRunning) return undefined;
@@ -156,26 +185,16 @@ function WorkoutSession({ exercise, onBack }) {
     return () => window.clearInterval(timerId);
   }, [isRunning]);
 
-  const time = `${String(Math.floor(elapsed / 60)).padStart(2, "0")}:${String(elapsed % 60).padStart(2, "0")}`;
+  const time = formatDuration(elapsed);
 
-  if (completed) {
-    return (
-      <section className="flex min-h-[65vh] flex-col items-center justify-center py-8 text-center">
-        <div className="grid h-16 w-16 place-items-center rounded-full bg-[#e1f3ed] text-[#198a7e]"><Icon name="check" className="h-8 w-8" /></div>
-        <p className="mb-1 mt-5 text-[9px] font-extrabold uppercase tracking-[1px] text-[#8995a5]">DEMO SESSION</p>
-        <h1 className="font-display text-2xl font-extrabold text-[#263b69]">Workout ended</h1>
-        <p className="mt-2 max-w-[270px] text-xs leading-relaxed text-[#778397]">Your session screen is complete. Session summaries and history are planned for Part 4.</p>
-        <div className="mt-5 w-full rounded-[18px] border border-[#edf0f3] p-4 text-left">
-          <div className="text-[9px] font-bold uppercase tracking-[.8px] text-[#8995a5]">Exercise</div>
-          <div className="mt-1 font-display text-sm font-bold text-[#263b69]">{exercise.name}</div>
-          <div className="mt-3 text-[9px] font-bold uppercase tracking-[.8px] text-[#8995a5]">Elapsed time</div>
-          <div className="mt-1 font-display text-sm font-bold text-[#263b69]">{time}</div>
-          <p className="mb-0 mt-3 border-t border-[#edf0f3] pt-3 text-[9px] text-[#8995a5]">No camera recording or AI analysis was performed.</p>
-        </div>
-        <button onClick={onBack} className="mt-5 min-h-11 w-full rounded-[14px] bg-[#237eae] text-xs font-bold text-white">Back to exercise</button>
-      </section>
-    );
-  }
+  if (completedSession) return <SessionSummary session={completedSession} onBack={onBack} onViewProgress={onViewProgress} />;
+
+  const finishSession = () => {
+    setIsRunning(false);
+    const session = { id: `${Date.now()}`, exerciseName: exercise.name, exerciseLabel: exercise.label, durationSeconds: elapsed, score: 92, completedAt: new Date().toISOString(), isDemo: true };
+    onComplete(session);
+    setCompletedSession(session);
+  };
 
   return (
     <section aria-labelledby="workout-title" className="pb-6 pt-5">
@@ -231,20 +250,46 @@ function WorkoutSession({ exercise, onBack }) {
 
       <div className="mt-4 grid grid-cols-2 gap-2.5">
         <button onClick={() => setIsRunning((value) => !value)} className="min-h-12 rounded-[14px] bg-[#237eae] text-xs font-bold text-white shadow-md shadow-[#237eae2b]">{isRunning ? "Pause" : elapsed > 0 ? "Resume" : "Start tracking"}</button>
-        <button onClick={() => { setIsRunning(false); setCompleted(true); }} disabled={!isRunning && elapsed === 0} className="min-h-12 rounded-[14px] border border-[#dce3e9] text-xs font-bold text-[#53637a] disabled:cursor-not-allowed disabled:opacity-45">Finish session</button>
+        <button onClick={finishSession} disabled={!isRunning && elapsed === 0} className="min-h-12 rounded-[14px] border border-[#dce3e9] text-xs font-bold text-[#53637a] disabled:cursor-not-allowed disabled:opacity-45">Finish session</button>
       </div>
     </section>
   );
 }
 
-function ExercisesPage() {
+function ProgressPage({ sessions }) {
+  const [selectedSession, setSelectedSession] = useState(null);
+  if (selectedSession) return <SessionSummary session={selectedSession} onBack={() => setSelectedSession(null)} onViewProgress={() => setSelectedSession(null)} />;
+  const recentSessions = [...sessions].sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt));
+  const weekCount = recentSessions.filter((session) => Date.now() - new Date(session.completedAt).getTime() < 7 * 24 * 60 * 60 * 1000).length;
+
+  return (
+    <section aria-labelledby="progress-title" className="pb-6 pt-5">
+      <p className="mb-1 text-[9px] font-extrabold uppercase tracking-[1px] text-[#8995a5]">YOUR ACTIVITY</p>
+      <h1 id="progress-title" className="font-display text-[25px] font-extrabold tracking-[-.8px] text-[#263b69]">My progress</h1>
+      <p className="mb-5 mt-1 text-xs text-[#8190a0]">A simple view of your recent demo sessions.</p>
+      <div className="rounded-[20px] bg-[#e8f2fb] p-4">
+        <div className="flex items-end justify-between"><div><p className="mb-1 text-[9px] font-bold uppercase tracking-[.8px] text-[#66839b]">Last 7 days</p><p className="mb-0 font-display text-2xl font-extrabold text-[#263b69]">{weekCount}<span className="ml-1 text-xs font-semibold text-[#748598]">sessions</span></p></div><Icon name="chart" className="h-8 w-8 text-[#5878ab]" /></div>
+        <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white"><div className="h-full rounded-full bg-[#26a695] transition-all" style={{ width: `${Math.min((weekCount / 3) * 100, 100)}%` }} /></div>
+        <p className="mb-0 mt-2 text-[9px] text-[#748598]">Progress is based on demo sessions saved on this device.</p>
+      </div>
+      <div className="mt-6 flex items-center justify-between"><h2 className="mb-0 font-display text-sm font-bold text-[#263b69]">Recent workouts</h2><span className="text-[9px] text-[#8995a5]">{recentSessions.length} total</span></div>
+      {recentSessions.length ? <div className="mt-3 space-y-2.5">{recentSessions.map((session) => <button key={session.id} onClick={() => setSelectedSession(session)} className="flex w-full items-center gap-3 rounded-[17px] border border-[#edf0f3] p-3 text-left transition hover:border-[#c7e4df]"><span className="grid h-11 w-11 shrink-0 place-items-center rounded-[14px] bg-[#e1f3ed] text-[#298f83]"><Icon name="exercise" className="h-6 w-6" /></span><span className="min-w-0 flex-1"><span className="block font-display text-xs font-bold text-[#263750]">{session.exerciseName}</span><span className="mt-1 block text-[9px] text-[#8995a5]">{new Date(session.completedAt).toLocaleDateString([], { dateStyle: "medium" })} · {formatDuration(session.durationSeconds)}</span></span><span className="rounded-full bg-[#fff4df] px-2 py-1 text-[8px] font-bold text-[#9b7441]">DEMO</span><span aria-hidden="true" className="text-xl text-[#9ba5b1]">›</span></button>)}</div> : <div className="mt-3 rounded-[18px] border border-dashed border-[#dce3e9] px-4 py-7 text-center"><div className="mx-auto grid h-11 w-11 place-items-center rounded-[14px] bg-[#f3f6f8] text-[#718097]"><Icon name="calendar" /></div><p className="mb-1 mt-3 font-display text-xs font-bold text-[#34415a]">No workouts yet</p><p className="mb-0 text-[10px] text-[#8995a5]">Finish a demo session to see it here.</p></div>}
+      <div className="mt-4 rounded-[14px] bg-[#fff8ed] px-3 py-2.5 text-[9px] leading-relaxed text-[#886b46]">This prototype stores sessions in memory only. Closing or refreshing the app clears this demo history.</div>
+    </section>
+  );
+}
+
+function ExercisesPage({ onWorkoutComplete, onViewProgress }) {
   const [tab, setTab] = useState("Assigned");
   const [selected, setSelected] = useState(null);
   const [workoutOpen, setWorkoutOpen] = useState(false);
+  const [completedSession, setCompletedSession] = useState(null);
   const exercises = tab === "Assigned" ? exerciseCatalog.filter((exercise) => exercise.assigned) : exerciseCatalog;
 
+  if (completedSession) return <SessionSummary session={completedSession} onBack={() => setCompletedSession(null)} onViewProgress={onViewProgress} />;
+
   if (workoutOpen && selected) {
-    return <WorkoutSession exercise={selected} onBack={() => setWorkoutOpen(false)} />;
+    return <WorkoutSession exercise={selected} onBack={() => setWorkoutOpen(false)} onComplete={(session) => { onWorkoutComplete(session); setCompletedSession(session); }} onViewProgress={onViewProgress} />;
   }
 
   if (selected) {
@@ -288,6 +333,7 @@ function ExercisesPage() {
 function App() {
   const [activePage, setActivePage] = useState("Home");
   const [notice, setNotice] = useState("");
+  const [sessions, setSessions] = useState([]);
 
   useEffect(() => {
     if (!notice) return undefined;
@@ -321,7 +367,9 @@ function App() {
         </section>
 
         {activePage === "Exercises" ? (
-          <ExercisesPage />
+          <ExercisesPage onWorkoutComplete={(session) => setSessions((current) => [session, ...current])} onViewProgress={() => setActivePage("Progress")} />
+        ) : activePage === "Progress" ? (
+          <ProgressPage sessions={sessions} />
         ) : (
           <>
         <section className="pb-[17px] pt-[21px]">
@@ -332,7 +380,7 @@ function App() {
 
         <section aria-label="Rehabilitation services" className="grid grid-cols-3 gap-[10px] max-[360px]:gap-[7px]">
           {featureCards.map((card) => (
-            <button key={card.title} onClick={() => card.title === "My exercises" || card.title === "Exercise guide" ? setActivePage("Exercises") : showNotice(card.message)} className={`${card.tone} flex min-h-[122px] min-w-0 flex-col items-center rounded-[20px] px-2 py-[13px] text-center transition hover:-translate-y-0.5 hover:shadow-lg max-[360px]:min-h-[114px] max-[360px]:px-1`}>
+            <button key={card.title} onClick={() => card.title === "My exercises" || card.title === "Exercise guide" ? setActivePage("Exercises") : setActivePage("Progress")} className={`${card.tone} flex min-h-[122px] min-w-0 flex-col items-center rounded-[20px] px-2 py-[13px] text-center transition hover:-translate-y-0.5 hover:shadow-lg max-[360px]:min-h-[114px] max-[360px]:px-1`}>
               <span className="mb-[7px] grid h-10 w-10 place-items-center rounded-[14px] bg-white/75 text-[#298f83]"><Icon name={card.icon} className={`h-[29px] w-[29px] ${card.icon === "play" ? "text-[#ca875d]" : card.icon === "chart" ? "text-[#637dab]" : ""}`} /></span>
               <span className="w-full whitespace-nowrap font-display text-[11px] font-bold text-[#263750] max-[360px]:text-[10px]">{card.title}</span>
               <span className="mt-[3px] w-full text-[9px] text-[#7a8795]">{card.detail}</span>
@@ -354,8 +402,8 @@ function App() {
           <article className="min-h-[122px] rounded-[18px] border border-[#edf0f3] bg-white p-3 shadow-sm shadow-[#293f5c0a]">
             <div className="grid h-[25px] w-[25px] place-items-center rounded-[9px] bg-[#fff0f0] text-[15px] text-[#e86779]"><Icon name="heart" className="h-4 w-4" filled /></div>
             <div className="mt-2 text-[9px] text-[#8390a0]">This week</div>
-            <div className="mt-0.5 font-display text-[17px] font-extrabold text-[#263b69]">2 <span className="font-sans text-[9px] font-medium text-[#7f8b9c]">of 3 sessions</span></div>
-            <div className="mt-[9px] h-[5px] overflow-hidden rounded-full bg-[#eef1f4]"><div className="h-full w-[67%] rounded-full bg-[#26a695]" /></div>
+            <div className="mt-0.5 font-display text-[17px] font-extrabold text-[#263b69]">{sessions.filter((session) => Date.now() - new Date(session.completedAt).getTime() < 7 * 24 * 60 * 60 * 1000).length} <span className="font-sans text-[9px] font-medium text-[#7f8b9c]">of 3 sessions</span></div>
+            <div className="mt-[9px] h-[5px] overflow-hidden rounded-full bg-[#eef1f4]"><div className="h-full rounded-full bg-[#26a695] transition-all" style={{ width: `${Math.min((sessions.filter((session) => Date.now() - new Date(session.completedAt).getTime() < 7 * 24 * 60 * 60 * 1000).length / 3) * 100, 100)}%` }} /></div>
           </article>
           <article className="min-h-[122px] rounded-[18px] border border-[#edf0f3] bg-white p-3 shadow-sm shadow-[#293f5c0a]">
             <div className="flex items-center justify-between"><div className="grid h-[25px] w-[25px] place-items-center rounded-[9px] bg-[#eef4ff] text-[#5878ab]"><Icon name="sparkle" className="h-4 w-4" /></div><span className="rounded-full bg-[#fef2e9] px-[7px] py-1 text-[8px] font-bold text-[#bc8050]">1 new</span></div>
@@ -377,7 +425,7 @@ function App() {
       <nav aria-label="Main navigation" className="fixed bottom-0 left-1/2 z-20 grid min-h-[72px] w-full max-w-[480px] -translate-x-1/2 grid-cols-4 border-t border-[#edf0f3] bg-white/95 px-[10px] pb-[calc(8px+env(safe-area-inset-bottom))] pt-2 backdrop-blur sm:bottom-7 sm:rounded-b-[28px]">
         {navigation.map((item) => {
           const active = activePage === item.label;
-          return <button key={item.label} aria-current={active ? "page" : undefined} onClick={() => { if (item.label === "Home" || item.label === "Exercises") setActivePage(item.label); else showNotice(`${item.label} will be built in a later part.`); }} className={`flex flex-col items-center justify-center gap-1 text-[9px] ${active ? "font-bold text-[#167eab]" : "text-[#8a96a6]"}`}>
+          return <button key={item.label} aria-current={active ? "page" : undefined} onClick={() => { if (item.label === "Home" || item.label === "Exercises" || item.label === "Progress") setActivePage(item.label); else showNotice(`${item.label} will be built in a later part.`); }} className={`flex flex-col items-center justify-center gap-1 text-[9px] ${active ? "font-bold text-[#167eab]" : "text-[#8a96a6]"}`}>
             <Icon name={item.icon} className="h-[21px] w-[21px]" /><span>{item.label}</span>
           </button>;
         })}
