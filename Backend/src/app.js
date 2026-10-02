@@ -2,6 +2,7 @@ import cors from "cors";
 import express from "express";
 import helmet from "helmet";
 import { firebaseConfigured } from "./config/firebase.js";
+import authRoutes from "./routes/auth.js";
 
 const app = express();
 const allowedOrigins = (process.env.CORS_ORIGINS || "http://localhost:5173")
@@ -27,16 +28,19 @@ app.get("/health", (_request, response) => {
   });
 });
 
+app.use("/api/v1", authRoutes);
+
 app.use((_request, response) => {
   response.status(404).json({ error: { code: "NOT_FOUND", message: "Route not found." } });
 });
 
-app.use((error, _request, response, _next) => {
-  const status = error.message === "Origin is not allowed by CORS." ? 403 : 500;
+app.use((error, _request, response, next) => {
+  if (response.headersSent) return next(error);
+  const status = error.status || (error.message === "Origin is not allowed by CORS." ? 403 : 500);
   response.status(status).json({
     error: {
-      code: status === 403 ? "ORIGIN_NOT_ALLOWED" : "INTERNAL_ERROR",
-      message: status === 403 ? "This origin is not allowed." : "An unexpected error occurred.",
+      code: error.code || (status === 403 ? "ORIGIN_NOT_ALLOWED" : "INTERNAL_ERROR"),
+      message: status < 500 ? error.message : "An unexpected error occurred.",
     },
   });
 });
