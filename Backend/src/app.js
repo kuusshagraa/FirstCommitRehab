@@ -44,7 +44,7 @@ app.use((error, _request, response, next) => {
   response.status(status).json({
     error: {
       code: error.code || (status === 403 ? "ORIGIN_NOT_ALLOWED" : "INTERNAL_ERROR"),
-      message: status < 500 ? error.message : "An unexpected error occurred.",
+      message: error.status ? error.message : status === 403 ? "This origin is not allowed." : "An unexpected error occurred.",
     },
   });
 });

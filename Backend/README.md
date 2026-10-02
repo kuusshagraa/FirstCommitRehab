@@ -44,6 +44,7 @@ For a cloud Firebase project, set `FIREBASE_PROJECT_ID`, remove both emulator ho
 - `POST /api/v1/patients/:patientUid/sessions` records a completed exercise and duration for the signed-in patient.
 - `GET /api/v1/patients/:patientUid/sessions` lists up to 50 recent records for that patient or their linked doctor.
 - `GET /api/v1/patients/:patientUid/sessions/:sessionId` retrieves one record for that patient or their linked doctor.
+- `POST /api/v1/patients/:patientUid/sessions/:sessionId/evaluation` forwards a bounded pose-angle sequence to the configured inference service and stores a validated result.
 - CORS allows only the origins listed in `CORS_ORIGINS` (comma-separated); by default it allows the Vite development origin.
 - Helmet sets standard HTTP security headers, and JSON request bodies are limited to 32 KB.
 - Firestore client access is denied by the starter rules. The Admin SDK uses server credentials and does not rely on Firestore client rules; future API routes must verify Firebase ID tokens and enforce patient/doctor permissions themselves.
@@ -52,4 +53,4 @@ For a cloud Firebase project, set `FIREBASE_PROJECT_ID`, remove both emulator ho
 
 ## Planned data groups
 
-Session records are stored under `patients/{patientUid}/sessions/{sessionId}`. New records start with `evaluation: null` and `evaluationStatus: "not_requested"`; only a later configured model service may populate an evaluation.
+Session records are stored under `patients/{patientUid}/sessions/{sessionId}`. New records start with `evaluation: null` and `evaluationStatus: "not_requested"`. Evaluation requires `AI_EVALUATION_URL`; the API sends `{ sessionId, exerciseLabel, jointAngles, samplingHz }`, with 2–120 frames of 16 numeric joint-angle features. The model service should return `{ classLabel, confidence, modelVersion? }`, where `classLabel` is one of the nine supported exercise labels and `confidence` is between 0 and 1. No model is bundled, and the backend does not invent a result when the service is unavailable.
