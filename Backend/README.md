@@ -14,7 +14,7 @@ npm install
 Copy-Item .env.example .env
 ```
 
-The starter `.env` points at the local Auth and Firestore emulators with the demo project ID `demo-rehab-ai`. Start the emulators in a second terminal from this directory:
+The starter `.env.example` points at the local Auth and Firestore emulators with the demo project ID `demo-rehab-ai`. Copy it to `.env` for emulator development, then start the emulators in a second terminal from this directory:
 
 ```sh
 npx firebase-tools emulators:start --only auth,firestore --project demo-rehab-ai
@@ -28,7 +28,7 @@ npm run dev
 
 Check `http://localhost:3000/health`. The endpoint returns `firebaseConfigured: true` when a project ID and emulator or server credentials are available.
 
-For a cloud Firebase project, set `FIREBASE_PROJECT_ID`, remove both emulator host values, and configure Application Default Credentials. For local service-account development, set `GOOGLE_APPLICATION_CREDENTIALS` to a key file stored outside this repository. Never commit service-account keys.
+For the cloud Firebase project, set `FIREBASE_PROJECT_ID=exyeasy-722c9`, leave the emulator host variables unset, and set `GOOGLE_APPLICATION_CREDENTIALS` to the Firebase Admin service-account JSON path. Store that file outside this repository and never commit or share it. The web app uses Firebase Authentication for sign-in and sends its ID tokens to this API; Firestore access goes through the API and Admin SDK.
 
 ## API foundation
 
