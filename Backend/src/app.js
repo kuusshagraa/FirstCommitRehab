@@ -4,6 +4,7 @@ import helmet from "helmet";
 import { firebaseConfigured } from "./config/firebase.js";
 import authRoutes from "./routes/auth.js";
 import patientRoutes from "./routes/patients.js";
+import sessionRoutes from "./routes/sessions.js";
 
 const app = express();
 const allowedOrigins = (process.env.CORS_ORIGINS || "http://localhost:5173")
@@ -31,6 +32,7 @@ app.get("/health", (_request, response) => {
 
 app.use("/api/v1", authRoutes);
 app.use("/api/v1", patientRoutes);
+app.use("/api/v1", sessionRoutes);
 
 app.use((_request, response) => {
   response.status(404).json({ error: { code: "NOT_FOUND", message: "Route not found." } });

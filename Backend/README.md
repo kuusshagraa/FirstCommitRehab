@@ -1,6 +1,6 @@
 # Rehab AI Backend
 
-Standalone Node.js API service for the Rehab AI React frontend. The service foundation, Firebase Admin setup, local emulator configuration, verified-user profiles, and controlled doctor-role provisioning are in place. This part adds patient lookup, doctor-patient linking, exercise assignments, and feedback.
+Standalone Node.js API service for the Rehab AI React frontend. The service foundation, Firebase Admin setup, local emulator configuration, verified-user profiles, patient-care-team access, exercise assignments, and feedback are in place. This part adds completed workout session records.
 
 ## Requirements
 
@@ -41,6 +41,9 @@ For a cloud Firebase project, set `FIREBASE_PROJECT_ID`, remove both emulator ho
 - `PUT /api/v1/patients/:patientUid/assignments` replaces the supported exercise assignments (doctor only).
 - `GET /api/v1/patients/:patientUid/feedback` reads feedback for that patient or their linked doctor.
 - `POST /api/v1/patients/:patientUid/feedback` adds doctor feedback for a linked patient.
+- `POST /api/v1/patients/:patientUid/sessions` records a completed exercise and duration for the signed-in patient.
+- `GET /api/v1/patients/:patientUid/sessions` lists up to 50 recent records for that patient or their linked doctor.
+- `GET /api/v1/patients/:patientUid/sessions/:sessionId` retrieves one record for that patient or their linked doctor.
 - CORS allows only the origins listed in `CORS_ORIGINS` (comma-separated); by default it allows the Vite development origin.
 - Helmet sets standard HTTP security headers, and JSON request bodies are limited to 32 KB.
 - Firestore client access is denied by the starter rules. The Admin SDK uses server credentials and does not rely on Firestore client rules; future API routes must verify Firebase ID tokens and enforce patient/doctor permissions themselves.
@@ -49,4 +52,4 @@ For a cloud Firebase project, set `FIREBASE_PROJECT_ID`, remove both emulator ho
 
 ## Planned data groups
 
-The later API parts will define and validate documents for user roles, patient/doctor relationships, exercise assignments, feedback, workout sessions, and evaluation results. This foundation intentionally exposes no patient-data routes yet.
+Session records are stored under `patients/{patientUid}/sessions/{sessionId}`. New records start with `evaluation: null` and `evaluationStatus: "not_requested"`; only a later configured model service may populate an evaluation.
