@@ -75,9 +75,9 @@ router.get("/patients/:patientUid/sessions/:sessionId", requireAuth, requirePati
 
 router.post("/patients/:patientUid/sessions/:sessionId/evaluation", requireAuth, requireRole("patient"), requirePatientAccess, async (request, response, next) => {
   try {
-    const { jointAngles } = request.body || {};
-    if (!Array.isArray(jointAngles) || jointAngles.length < 2 || jointAngles.length > 120 || jointAngles.some((frame) => !Array.isArray(frame) || frame.length !== 16 || frame.some((angle) => typeof angle !== "number" || !Number.isFinite(angle)))) {
-      throw invalid("jointAngles must contain 2 to 120 frames, each with 16 finite numeric features.");
+    const { jointSequence } = request.body || {};
+    if (!Array.isArray(jointSequence) || jointSequence.length < 2 || jointSequence.length > 32 || jointSequence.some((frame) => !Array.isArray(frame) || frame.length !== 26 || frame.some((joint) => !Array.isArray(joint) || joint.length !== 2 || joint.some((coordinate) => typeof coordinate !== "number" || !Number.isFinite(coordinate) || coordinate < 0 || coordinate > 1)))) {
+      throw invalid("jointSequence must contain 2 to 32 frames, each with 26 two-dimensional joints in the 0–1 range.");
     }
 
     const modelUrl = process.env.AI_EVALUATION_URL;
@@ -117,8 +117,8 @@ router.post("/patients/:patientUid/sessions/:sessionId/evaluation", requireAuth,
         body: JSON.stringify({
           sessionId: request.params.sessionId,
           exerciseLabel: exercise.label,
-          jointAngles,
-          samplingHz: 30,
+          jointSequence,
+          samplingHz: 11,
         }),
         signal: AbortSignal.timeout(15000),
       });
@@ -137,7 +137,7 @@ router.post("/patients/:patientUid/sessions/:sessionId/evaluation", requireAuth,
     }
     const result = await modelResponse.json();
     const validLabels = new Set(Array.from(exerciseById.values(), (item) => item.label));
-    if (!result || !validLabels.has(result.classLabel) || typeof result.confidence !== "number" || !Number.isFinite(result.confidence) || result.confidence < 0 || result.confidence > 1) {
+    if (!result || !validLabels.has(result.classLabel) || typeof result.className !== "string" || typeof result.confidence !== "number" || !Number.isFinite(result.confidence) || result.confidence < 0 || result.confidence > 1) {
       const error = new Error("The movement evaluation service returned an invalid result.");
       error.status = 502;
       error.code = "INVALID_AI_RESPONSE";
@@ -146,7 +146,9 @@ router.post("/patients/:patientUid/sessions/:sessionId/evaluation", requireAuth,
 
     const evaluation = {
       classLabel: result.classLabel,
+      className: result.className.slice(0, 80),
       confidence: result.confidence,
+      dataset: typeof result.dataset === "string" ? result.dataset.slice(0, 80) : "REHAB24-6",
       modelVersion: typeof result.modelVersion === "string" ? result.modelVersion.slice(0, 80) : null,
     };
     await sessionRef.update({

@@ -53,7 +53,11 @@ Duration must be an integer from 1 to 7,200 seconds. The server supplies complet
 
 ### Inference service contract
 
-The evaluation route accepts `jointAngles` as 2–120 frames, each with 16 finite numeric features. It sends the configured service `{ sessionId, exerciseLabel, jointAngles, samplingHz }` and expects `{ classLabel, confidence, modelVersion? }`. Labels must match the supported exercise classes, and confidence must be a number from 0 to 1. If `AI_EVALUATION_URL` is absent, the API returns `503 AI_SERVICE_NOT_CONFIGURED`.
+The supported exercise catalog contains the six REHAB24-6 classes: arm abduction (`Ex1`), arm V-to-W (`Ex2`), table push-up (`Ex3`), leg abduction (`Ex4`), leg lunge (`Ex5`), and squat (`Ex6`).
+
+The patient evaluation route accepts `jointSequence` as 2–32 frames, each containing 26 `[x, y]` pairs normalized to the 0–1 camera frame. The backend sends `{ sessionId, exerciseLabel, jointSequence, samplingHz }` to the configured model service and expects `{ classLabel, className, confidence, dataset?, modelVersion? }`. Labels must be one of `Ex1` through `Ex6`, and confidence must be a number from 0 to 1. The route stores the predicted exercise label, display name, confidence, dataset, and model version; it does not score exercise form or correctness. If `AI_EVALUATION_URL` is absent, the API returns `503 AI_SERVICE_NOT_CONFIGURED`.
+
+The browser extracts landmarks on-device with MediaPipe. It sends one sampled pose sequence (not camera frames or video) to the authenticated backend; the backend stores only the resulting classification. The model endpoint accepts 26-joint REHAB24-6 skeletons, so a submitted sequence is an integration baseline and may not classify MediaPipe camera poses as well as its held-out dataset evaluation suggests.
 
 ## Role and relationship setup
 

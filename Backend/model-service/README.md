@@ -44,16 +44,7 @@ uvicorn app:app --host 127.0.0.1 --port 8001
 
 `POST /predict` accepts a segmented sequence:
 
-```json
-{
-  "jointSequence": [
-    [[0.0, 0.0], [0.1, 0.2]],
-    [[0.0, 0.1], [0.1, 0.3]]
-  ]
-}
-```
-
-The example is abbreviated; each frame must contain the dataset's 26 joints and two coordinates. The current backend evaluation route instead accepts 16 joint angles and the frontend does not yet capture camera pose. Adapting that contract and adding segmentation/pose extraction are follow-up integration work.
+The request body is `{"jointSequence": frames}`. Each item in `frames` is one time sample containing exactly 26 `[x, y]` landmark pairs normalized to the 0–1 image range. The backend accepts up to 32 frames. The React app extracts and segments a pose locally with MediaPipe, then sends only this sampled skeleton to the API; it does not upload camera video.
 
 ## Citation
 

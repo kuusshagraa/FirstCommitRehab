@@ -44,7 +44,7 @@ For the cloud Firebase project, set `FIREBASE_PROJECT_ID=exyeasy-722c9`, leave t
 - `POST /api/v1/patients/:patientUid/sessions` records a completed exercise and duration for the signed-in patient.
 - `GET /api/v1/patients/:patientUid/sessions` lists up to 50 recent records for that patient or their linked doctor.
 - `GET /api/v1/patients/:patientUid/sessions/:sessionId` retrieves one record for that patient or their linked doctor.
-- `POST /api/v1/patients/:patientUid/sessions/:sessionId/evaluation` forwards a bounded pose-angle sequence to the configured inference service and stores a validated result.
+- `POST /api/v1/patients/:patientUid/sessions/:sessionId/evaluation` forwards a bounded pose sequence to the configured inference service and stores a validated result.
 - CORS allows only the origins listed in `CORS_ORIGINS` (comma-separated); by default it allows the Vite development origin.
 - Helmet sets standard HTTP security headers, and JSON request bodies are limited to 32 KB.
 - Firestore client access is denied by the starter rules. The Admin SDK uses server credentials and does not rely on Firestore client rules; future API routes must verify Firebase ID tokens and enforce patient/doctor permissions themselves.
@@ -53,6 +53,19 @@ For the cloud Firebase project, set `FIREBASE_PROJECT_ID=exyeasy-722c9`, leave t
 
 See [`docs/api-contract.md`](docs/api-contract.md) for the route matrix, request bodies, role requirements, and model-service payload.
 
+## Local movement model
+
+The patient app uses MediaPipe in the browser to track a pose. The API forwards a sampled 26-joint sequence to the Python classifier. Start the classifier before the Node API:
+
+```powershell
+cd Backend/model-service
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe -m uvicorn app:app --host 127.0.0.1 --port 8001
+```
+
+Set `AI_EVALUATION_URL=http://127.0.0.1:8001/predict` in `Backend/.env`; restart the API after changing it. The tracked model artifact is included in `model-service/models/`, so inference does not require downloading the training data. Camera access requires `localhost` or HTTPS. See [`model-service/README.md`](model-service/README.md) for training, dataset limitations, and the academic/noncommercial data-use restriction.
+
 ## Planned data groups
 
-Session records are stored under `patients/{patientUid}/sessions/{sessionId}`. New records start with `evaluation: null` and `evaluationStatus: "not_requested"`. Evaluation requires `AI_EVALUATION_URL`; the model input and response contract is documented in [`docs/api-contract.md`](docs/api-contract.md). A separate research baseline lives in [`model-service`](model-service/README.md); it recognizes six REHAB24-6 movement classes from raw 26-joint pose sequences. It is not connected to the session evaluation route, which currently accepts 16 joint angles, and it does not replace RehabAI's nine target classes.
+Session records are stored under `patients/{patientUid}/sessions/{sessionId}`. New records start with `evaluation: null` and `evaluationStatus: "not_requested"`. The evaluation route forwards a sampled pose sequence to the six-class REHAB24-6 movement classifier. The app's exercise catalog now matches those six labels; it no longer claims to support the nine different movements from the presentation. The classifier identifies exercise category only; it does not score movement form or provide clinical guidance.

@@ -25,12 +25,12 @@ def load_artifact():
 
 class PredictionRequest(BaseModel):
     # One already-segmented repetition of the dataset's 26-joint 2D skeleton.
-    jointSequence: list[list[list[float]]] = Field(min_length=2, max_length=1200)
+    jointSequence: list[list[list[float]]] = Field(min_length=2, max_length=32)
 
 
 @app.get("/health")
 def health():
-    return {"ready": MODEL_PATH.exists(), "model": "REHAB24-6 six-class research baseline"}
+    return {"ready": MODEL_PATH.exists(), "model": "REHAB24-6 six-class research baseline", "input": "32 frames x 26 joints x 2 normalized coordinates"}
 
 
 @app.post("/predict")
