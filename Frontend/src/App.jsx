@@ -103,7 +103,7 @@ function MovementIllustration() {
   );
 }
 
-function ExerciseDetails({ exercise, onBack, onStartWorkout }) {
+function ExerciseDetails({ exercise, onBack, onStartWorkout, doctorFeedback }) {
   return (
     <section aria-labelledby="exercise-detail-title" className="pb-6 pt-5">
       <button onClick={onBack} className="mb-5 inline-flex items-center gap-2 text-xs font-bold text-[#168b8c]">
@@ -139,7 +139,7 @@ function ExerciseDetails({ exercise, onBack, onStartWorkout }) {
 
       <div className="mt-3 rounded-[18px] border border-[#edf0f3] p-4">
         <div className="flex items-center gap-2 font-display text-xs font-bold text-[#34415a]"><Icon name="sparkle" className="h-4 w-4 text-[#5878ab]" /> Doctor feedback</div>
-        <p className="mb-0 mt-2 text-[10px] leading-relaxed text-[#778397]">No feedback has been added to this sample assignment.</p>
+        <p className="mb-0 mt-2 text-[10px] leading-relaxed text-[#778397]">{doctorFeedback || "No feedback has been added to this sample assignment."}</p>
       </div>
 
       <button onClick={onStartWorkout} className="mt-5 flex min-h-12 w-full items-center justify-center gap-2 rounded-[14px] bg-[#237eae] text-sm font-bold text-white shadow-md shadow-[#237eae2b]">
@@ -285,12 +285,13 @@ function ProgressPage({ sessions }) {
   );
 }
 
-function ExercisesPage({ onWorkoutComplete, onViewProgress }) {
+function ExercisesPage({ onWorkoutComplete, onViewProgress, assignedNames, doctorFeedback }) {
   const [tab, setTab] = useState("Assigned");
   const [selected, setSelected] = useState(null);
   const [workoutOpen, setWorkoutOpen] = useState(false);
   const [completedSession, setCompletedSession] = useState(null);
-  const exercises = tab === "Assigned" ? exerciseCatalog.filter((exercise) => exercise.assigned) : exerciseCatalog;
+  const patientExercises = exerciseCatalog.map((exercise) => ({ ...exercise, assigned: assignedNames.includes(exercise.name) }));
+  const exercises = tab === "Assigned" ? patientExercises.filter((exercise) => exercise.assigned) : patientExercises;
 
   if (completedSession) return <SessionSummary session={completedSession} onBack={() => setCompletedSession(null)} onViewProgress={onViewProgress} />;
 
@@ -299,7 +300,7 @@ function ExercisesPage({ onWorkoutComplete, onViewProgress }) {
   }
 
   if (selected) {
-    return <ExerciseDetails exercise={selected} onBack={() => setSelected(null)} onStartWorkout={() => setWorkoutOpen(true)} />;
+    return <ExerciseDetails exercise={selected} onBack={() => setSelected(null)} onStartWorkout={() => setWorkoutOpen(true)} doctorFeedback={doctorFeedback} />;
   }
 
   return (
@@ -336,16 +337,14 @@ function ExercisesPage({ onWorkoutComplete, onViewProgress }) {
   );
 }
 
-function DoctorDashboard({ sessions, showNotice }) {
+function DoctorDashboard({ sessions, showNotice, feedback, setFeedback, assignments, setAssignments }) {
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [query, setQuery] = useState("");
-  const [feedback, setFeedback] = useState({});
-  const [assignments, setAssignments] = useState({});
   const filteredPatients = demoPatients.filter((patient) => `${patient.name} ${patient.id}`.toLowerCase().includes(query.toLowerCase()));
 
   if (selectedPatient) {
     const patientSessions = selectedPatient.id === "RA-2048" ? sessions : [];
-    const assigned = assignments[selectedPatient.id] || ["Arm rotation", "Squat", "Body twist"];
+    const assigned = assignments[selectedPatient.id] || (selectedPatient.id === "RA-2048" ? ["Arm rotation", "Squat", "Body twist"] : []);
     return (
       <section className="pb-6 pt-5">
         <button onClick={() => setSelectedPatient(null)} className="mb-5 inline-flex items-center gap-2 text-xs font-bold text-[#168b8c]"><span aria-hidden="true" className="text-lg">←</span> All patients</button>
@@ -376,6 +375,9 @@ function App() {
   const [userMode, setUserMode] = useState("Patient");
   const [notice, setNotice] = useState("");
   const [sessions, setSessions] = useState([]);
+  const [doctorFeedback, setDoctorFeedback] = useState({});
+  const [doctorAssignments, setDoctorAssignments] = useState({});
+  const patientAssignments = doctorAssignments["RA-2048"] || ["Arm rotation", "Squat", "Body twist"];
   const appNavigation = userMode === "Doctor" ? [{ label: "Home", icon: "home" }, { label: "Patients", icon: "list" }, { label: "Profile", icon: "user" }] : navigation;
 
   useEffect(() => {
@@ -410,9 +412,9 @@ function App() {
         </section>
 
         {userMode === "Doctor" ? (
-          <DoctorDashboard sessions={sessions} showNotice={showNotice} />
+          <DoctorDashboard sessions={sessions} showNotice={showNotice} feedback={doctorFeedback} setFeedback={setDoctorFeedback} assignments={doctorAssignments} setAssignments={setDoctorAssignments} />
         ) : activePage === "Exercises" ? (
-          <ExercisesPage onWorkoutComplete={(session) => setSessions((current) => [session, ...current])} onViewProgress={() => setActivePage("Progress")} />
+          <ExercisesPage onWorkoutComplete={(session) => setSessions((current) => [session, ...current])} onViewProgress={() => setActivePage("Progress")} assignedNames={patientAssignments} doctorFeedback={doctorFeedback["RA-2048"]} />
         ) : activePage === "Progress" ? (
           <ProgressPage sessions={sessions} />
         ) : (
@@ -453,8 +455,8 @@ function App() {
           <article className="min-h-[122px] rounded-[18px] border border-[#edf0f3] bg-white p-3 shadow-sm shadow-[#293f5c0a]">
             <div className="flex items-center justify-between"><div className="grid h-[25px] w-[25px] place-items-center rounded-[9px] bg-[#eef4ff] text-[#5878ab]"><Icon name="sparkle" className="h-4 w-4" /></div><span className="rounded-full bg-[#fef2e9] px-[7px] py-1 text-[8px] font-bold text-[#bc8050]">1 new</span></div>
             <div className="mt-2 text-[9px] text-[#8390a0]">Doctor feedback</div>
-            <div className="mt-[5px] overflow-hidden text-ellipsis whitespace-nowrap font-display text-[10px] font-bold text-[#34435b]">You’re building a great routine.</div>
-            <button onClick={() => showNotice("Doctor feedback details will be available in Part 2.")} className="mt-[7px] text-[9px] font-bold text-[#168b8c]">View note <span>→</span></button>
+            <div className="mt-[5px] overflow-hidden text-ellipsis whitespace-nowrap font-display text-[10px] font-bold text-[#34435b]">{feedback["RA-2048"] || "No new feedback yet."}</div>
+            <button onClick={() => setActivePage("Exercises")} className="mt-[7px] text-[9px] font-bold text-[#168b8c]">Open exercise details <span>→</span></button>
           </article>
         </section>
 
